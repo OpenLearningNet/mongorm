@@ -1,17 +1,20 @@
 from mongorm.fields.DictField import DictField
 
+from collections import deque
 from operator import methodcaller
 
 def deepCoded( dictionary, coder ):
-	coded = {}
-	for key, value in dictionary.iteritems( ):
-		if isinstance(key, basestring):
-			# Keys have to be strings in mongo so this should always occur
-			key = coder( key )
-		if isinstance(value, dict):
-			value = deepCoded( value, coder )
-		coded[key] = value
-	return coded
+	toCode = deque( [dictionary] )
+	while toCode:
+		nextDictionary = toCode.popleft( )
+		for key, value in nextDictionary.items( ): # can't be iteritems as we're changing the dict
+			if isinstance(key, basestring):
+				# Keys have to be strings in mongo so this should always occur
+				del nextDictionary[key]
+				nextDictionary[coder( key )] = value
+			if isinstance(value, dict):
+				toCode.append( value )
+	return dictionary
 
 def encode( string ):
 	if isinstance(string, unicode):
