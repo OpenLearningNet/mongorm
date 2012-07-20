@@ -5,6 +5,7 @@ from mongorm.DocumentRegistry import DocumentRegistry
 from mongorm.EmbeddedDocument import EmbeddedDocument
 
 from mongorm.fields.DictField import DictField
+from mongorm.fields.SafeDictField import SafeDictField
 from mongorm.fields.IntegerField import IntegerField, IntField
 from mongorm.fields.ObjectIdField import ObjectIdField
 from mongorm.fields.StringField import StringField
