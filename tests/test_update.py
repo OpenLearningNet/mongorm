@@ -11,7 +11,7 @@ def test_update_dictfield( ):
 
 	assert Q( { 'data__123': 'test' } ).toMongo( TestA, forUpdate=True ) == { 'data.123': 'test' }
 
-	# children of a dictfield shouldn't be motified
+	# children of a dictfield shouldn't be modified
 	fieldName = 'data__123'
 	value = {"XXX": "YYY"}
 	assert Q( { fieldName: value } ).toMongo( TestA, forUpdate=True )[fieldName.replace('__', '.')] \
