@@ -25,3 +25,37 @@ def test_equality( ):
 
 	assert c == a
 	assert not (c != a)
+
+def test_equality_with_none( ):
+	"""Tests to make sure comparisons with None work."""
+
+	class TestDocument(Document):
+		s = StringField( )
+
+	a = TestDocument( )
+	a.save( )
+
+	assert a.s is None
+
+	a.s = ""
+	a.save( )
+
+	assert a.s == ""
+
+	a.s = None
+	a.save( )
+
+	assert a.s is None
+
+def test_equality_with_unicode( ):
+	"""Tests to make sure comparisons with None work."""
+
+	class TestDocument(Document):
+		s = StringField( )
+
+	a = TestDocument( s=u"déjà vu" )
+	a.save( )
+
+	assert a.s == u"déjà vu"
+	assert a.s != "déjà vu"
+	assert a.s != "deja vu"
