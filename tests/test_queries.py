@@ -188,3 +188,27 @@ def test_push( ):
 	) == {
 		'$pushAll': {'names': ['123', '456']}
 	}
+
+def test_in_operator( ):
+	"""Tests in operator works with lists"""
+	connect( 'test_mongorm' )
+
+	class Test(Document):
+		name = StringField( )
+
+	assert Q( name__in=[] ).toMongo( Test ) \
+		== {'name': {'$in': []}}
+
+	assert Q( name__in=['eggs', 'spam'] ).toMongo( Test ) \
+		== {'name': {'$in': ['eggs', 'spam']}}
+
+	# Clear objects so that counts will be correct
+	Test.objects.all( ).delete( )
+
+	Test( name='spam' ).save( )
+	Test( name='eggs' ).save( )
+
+	assert Test.objects.filter( name__in=[] ).count( ) == 0
+	assert Test.objects.filter( name__in=['spam'] ).count( ) == 1
+	assert Test.objects.filter( name__in=['eggs'] ).count( ) == 1
+	assert Test.objects.filter( name__in=['spam', 'eggs'] ).count( ) == 2
