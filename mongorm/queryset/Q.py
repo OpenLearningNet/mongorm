@@ -37,6 +37,7 @@ class Q(object):
 				'imatches': ( None, 'i' ),
 			}
 			ALL_COMPARISONS = MONGO_COMPARISONS + REGEX_COMPARISONS.keys()
+			ARRAY_VALUE_COMPARISONS = ['all', 'in']
 
 			comparison = None
 			dereferences = []
@@ -58,10 +59,16 @@ class Q(object):
 			
 			field = document._fields[fieldName]
 			if not forUpdate:
-				searchValue = field.toQuery( value, dereferences=dereferences )
+				if comparison in ARRAY_VALUE_COMPARISONS:
+					searchValue = [field.toQuery( item, dereferences=dereferences ) for item in value]
+				else:
+					searchValue = field.toQuery( value, dereferences=dereferences )
 				targetSearchKey = field.dbField
 			else:
-				searchValue = field.fromPython( value, dereferences=dereferences, modifier=modifier )
+				if comparison in ARRAY_VALUE_COMPARISONS:
+					searchValue = [field.fromPython( item, dereferences=dereferences, modifier=modifier ) for item in value]
+				else:
+					searchValue = field.fromPython( value, dereferences=dereferences, modifier=modifier )
 				targetSearchKey = '.'.join( [field.dbField] + dereferences)
 			
 			valueMapper = lambda value: value
