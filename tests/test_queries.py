@@ -212,3 +212,31 @@ def test_in_operator( ):
 	assert Test.objects.filter( name__in=['spam'] ).count( ) == 1
 	assert Test.objects.filter( name__in=['eggs'] ).count( ) == 1
 	assert Test.objects.filter( name__in=['spam', 'eggs'] ).count( ) == 2
+
+def test_in_iter_operator( ):
+	"""Tests in operator works with iterators"""
+	connect( 'test_mongorm' )
+
+	class Test(Document):
+		name = StringField( )
+
+	assert Q( name__in={} ).toMongo( Test ) \
+		== {'name': {'$in': []}}
+
+	assert Q( name__in=set(['eggs', 'spam']) ).toMongo( Test ) \
+		== {'name': {'$in': ['eggs', 'spam']}}
+
+	# Clear objects so that counts will be correct
+	Test.objects.all( ).delete( )
+
+	Test( name='spam' ).save( )
+	Test( name='eggs' ).save( )
+
+	def test_gen( ):
+		for item in ('eggs', 'spam'):
+			yield item
+
+	assert Test.objects.filter( name__in=() ).count( ) == 0
+	assert Test.objects.filter( name__in={'spam': True} ).count( ) == 1
+	assert Test.objects.filter( name__in=frozenset(['eggs']) ).count( ) == 1
+	assert Test.objects.filter( name__in=test_gen() ).count( ) == 2
