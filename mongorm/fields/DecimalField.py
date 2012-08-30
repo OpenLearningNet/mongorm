@@ -2,8 +2,6 @@ from mongorm.fields.BaseField import BaseField
 
 from decimal import Decimal
 
-from datetime import datetime
-
 class DecimalField(BaseField):
 	def fromPython( self, pythonValue, dereferences=[], modifier=None ):
 		if isinstance(pythonValue, (basestring, int, float)):
