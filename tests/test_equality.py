@@ -1,6 +1,15 @@
 from mongorm import *
 from pymongo.dbref import DBRef
 
+try:
+    from pytz import timezone, UTC
+except ImportError:
+    PYTZ = False
+else:
+    PYTZ = True
+
+from datetime import datetime
+
 def teardown_module(module):
 	DocumentRegistry.clear( )
 
@@ -59,3 +68,28 @@ def test_equality_with_unicode( ):
 	assert a.s == u"déjà vu"
 	assert a.s != "déjà vu"
 	assert a.s != "deja vu"
+
+def test_equality_with_datetime( ):
+    """Tests to make sure comparisons with datetime objects work."""
+
+    class TestDateTime(Document):
+        timestamp = DateTimeField( )
+
+    # Get current UTC time to the nearest millisecond
+    now = datetime.utcnow( ).replace( microsecond=0 )
+
+    if PYTZ:
+        now = UTC.localize( now )
+        now = now.astimezone( timezone( "Australia/Sydney" ) )
+
+    t = TestDateTime( timestamp=now )
+    t.save( )
+
+    assert t.timestamp == now
+
+    if PYTZ:
+        now = now.astimezone( UTC )
+
+    t = TestDateTime.objects.get( pk=t.id )
+
+    assert t.timestamp == now
