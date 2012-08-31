@@ -9,8 +9,22 @@ except ImportError:
 else:
 	PYTZ = True
 
+try:
+	from iso8601 import parse_date, ParseError
+except ImportError:
+	ISO8601 = False
+else:
+	ISO8601 = True
+
 class DateTimeField(BaseField):
 	def fromPython( self, pythonValue, dereferences=[], modifier=None ):
+		if ISO8601 and isinstance(pythonValue, basestring):
+			try:
+				pythonValue = parse_date( pythonValue )
+			except ParseError:
+				# oh well we tried
+				pass
+
 		if pythonValue is not None and not isinstance(pythonValue, datetime):
 			raise ValueError, "Value must be a datetime object not %r" % (pythonValue,)
 

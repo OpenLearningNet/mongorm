@@ -8,6 +8,13 @@ except ImportError:
 else:
     PYTZ = True
 
+try:
+    from iso8601 import parse_date
+except ImportError:
+    ISO8601 = False
+else:
+    ISO8601 = True
+
 from datetime import datetime
 
 def teardown_module(module):
@@ -93,3 +100,16 @@ def test_equality_with_datetime( ):
     t = TestDateTime.objects.get( pk=t.id )
 
     assert t.timestamp == now
+
+    try:
+        t.timestamp = now.isoformat( )
+        t.save( )
+    except ValueError:
+        assert not ISO8601
+    else:
+        assert ISO8601
+
+    if ISO8601:
+        t = TestDateTime.objects.get( pk=t.id )
+
+        assert t.timestamp == now
