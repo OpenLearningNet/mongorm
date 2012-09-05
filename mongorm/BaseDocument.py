@@ -33,7 +33,7 @@ class BaseDocument(object):
 
 	# The following three methods are used for pickling/unpickling.
 	# If it weren't for the fact that  __getattr__ returns None
-	# for non-existing attributes (rather than raising an AttributError),
+	# for non-existing attributes (rather than raising an AttributeError),
 	# we would not need to define them.
 
 	def __getstate__( self ):
