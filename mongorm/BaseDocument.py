@@ -30,7 +30,21 @@ class BaseDocument(object):
 				setattr(self, name, pythonValue)
 		
 		return self
-	
+
+	# The following three methods are used for pickling/unpickling.
+	# If it weren't for the fact that  __getattr__ returns None
+	# for non-existing attributes (rather than raising an AttributeError),
+	# we would not need to define them.
+
+	def __getstate__( self ):
+		return self.__dict__
+
+	def __setstate__( self, state ):
+		self.__dict__.update( state )
+
+	def __getnewargs__( self ):
+		return ( )
+
 	def __setattr__( self, name, value ):
 		assert (name[0] == '_' and hasattr(self, name)) or name in self._fields, \
 			"Field '%s' does not exist in document '%s'" \
