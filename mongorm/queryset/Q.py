@@ -60,13 +60,29 @@ class Q(object):
 			field = document._fields[fieldName]
 			if not forUpdate:
 				if comparison in ARRAY_VALUE_COMPARISONS:
-					searchValue = [field.toQuery( item, dereferences=dereferences ) for item in value]
+					searchValues = [field.toQuery( item, dereferences=dereferences ) for item in value]
+					if searchValues and isinstance(searchValues[0], dict):
+						searchValue = {}
+						for dictValue in searchValues:
+							for key in dictValue:
+								# using setdefault instead of defaultdict in case python < 2.5
+								searchValue.setdefault(key, []).append( dictValue[key] )
+					else:
+						searchValue = searchValues
 				else:
 					searchValue = field.toQuery( value, dereferences=dereferences )
 				targetSearchKey = field.dbField
 			else:
 				if comparison in ARRAY_VALUE_COMPARISONS:
-					searchValue = [field.fromPython( item, dereferences=dereferences, modifier=modifier ) for item in value]
+					searchValues = [field.fromPython( item, dereferences=dereferences, modifier=modifier ) for item in value]
+					if searchValues and isinstance(searchValues[0], dict):
+						searchValue = {}
+						for dictValue in searchValues:
+							for key in dictValue:
+								# using setdefault instead of defaultdict in case python < 2.5
+								searchValue.setdefault(key, []).append( dictValue[key] )
+					else:
+						searchValue = searchValues
 				else:
 					searchValue = field.fromPython( value, dereferences=dereferences, modifier=modifier )
 				targetSearchKey = '.'.join( [field.dbField] + dereferences)
