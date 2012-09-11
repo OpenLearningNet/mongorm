@@ -240,3 +240,50 @@ def test_in_iter_operator( ):
 	assert Test.objects.filter( name__in={'spam': True} ).count( ) == 1
 	assert Test.objects.filter( name__in=frozenset(['eggs']) ).count( ) == 1
 	assert Test.objects.filter( name__in=test_gen() ).count( ) == 2
+
+def test_in_operator_with_ref( ):
+	"""Tests in operator works with references"""
+	connect( 'test_mongorm' )
+
+	class TestUser(Document):
+		name = StringField( )
+
+	class TestOrder(Document):
+		user = ReferenceField( TestUser )
+		breakfast = StringField( )
+
+	# Clear objects so that counts will be correct
+	TestUser.objects.all( ).delete( )
+	TestOrder.objects.all( ).delete( )
+
+	man = TestUser( name="Eric Idle" )
+	wife = TestUser( name="Graham Chapman" )
+	man.save( )
+	wife.save( )
+
+	assert TestUser.objects.filter( name__in=["Eric Idle", "Graham Chapman"] ).count( ) == 2
+
+	TestOrder( user=man, breakfast="spam spam spam beans spam" ).save( )
+	TestOrder( user=wife, breakfast="bacon and eggs" ).save( )
+
+	assert TestOrder.objects.filter( user=man ).count( ) == 1
+	assert TestOrder.objects.filter( user=wife ).count( ) == 1
+	assert TestOrder.objects.filter( user__in=[man, wife] ).count( ) == 2
+
+	TestOrder( user=man, breakfast="spam spam spam spam spam" ).save( )
+
+	assert TestOrder.objects.filter( user__in=[man, wife] ).count( ) == 3
+	assert TestOrder.objects.filter( breakfast__in=["spam spam spam", "bacon and eggs"] ).count( ) == 1
+	assert TestOrder.objects.filter( breakfast__in=["spam spam spam spam spam", "bacon and eggs"] ).count( ) == 2
+	assert TestOrder.objects.filter( breakfast__in=[
+		"spam spam spam beans spam",
+		"spam spam spam spam spam",
+		"bacon and eggs"
+	] ).count( ) == 3
+	assert TestOrder.objects.filter( user__in=[wife], breakfast__in=["spam spam spam spam spam"] ).count( ) == 0
+	assert TestOrder.objects.filter( user__in=[man], breakfast__in=["spam spam spam spam spam"] ).count( ) == 1
+	assert TestOrder.objects.filter( user__in=[man, wife], breakfast__in=[
+		"spam spam spam spam spam",
+		"spam spam spam beans spam",
+		"bacon and eggs"
+	] ).count( ) == 3
