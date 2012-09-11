@@ -1,6 +1,9 @@
 from mongorm import *
 
-from pymongo.objectid import ObjectId
+try:
+	from pymongo.objectid import ObjectId
+except ImportError:
+	from bson.objectid import ObjectId
 
 def setup_module(module):
 	DocumentRegistry.clear( )
