@@ -48,3 +48,43 @@ def test_binary_pickle( ):
 	assert pickle.loads( gherkin ) == cucumber
 
 	assert pickle.loads( gherkin ) == TestPickledDocument.objects.get( s="eggs" )
+
+def test_deleted_pickle( ):
+	"""Tests to make sure deleted objects can be unpickled."""
+	connect( 'test_mongorm' )
+
+	assert DocumentRegistry.hasDocument( "TestPickledDocument" )
+
+	cucumber = TestPickledDocument( s="onions" )
+	cucumber.save( )
+
+	assert cucumber == TestPickledDocument.objects.get( s="onions" )
+
+	gherkin = pickle.dumps( cucumber, pickle.HIGHEST_PROTOCOL )
+
+	TestPickledDocument.objects.filter( pk=cucumber.id ).delete( )
+	assert TestPickledDocument.objects.filter( pk=cucumber.id ).count( ) == 0
+
+	assert pickle.loads( gherkin ).s == "onions"
+	assert pickle.loads( gherkin ) == cucumber
+
+def test_modified_pickle( ):
+	"""Tests to make sure pickled objects are updated."""
+	connect( 'test_mongorm' )
+
+	assert DocumentRegistry.hasDocument( "TestPickledDocument" )
+
+	cucumber = TestPickledDocument( s="cabbage" )
+	cucumber.save( )
+
+	assert cucumber == TestPickledDocument.objects.get( s="cabbage" )
+
+	gherkin = pickle.dumps( cucumber, pickle.HIGHEST_PROTOCOL )
+
+	cucumber.s = "kimchi"
+	cucumber.save( )
+
+	assert pickle.loads( gherkin ) == cucumber
+
+	assert TestPickledDocument.objects.filter( s="cabbage" ).count( ) == 0
+	assert pickle.loads( gherkin ) == TestPickledDocument.objects.get( s="kimchi" )
