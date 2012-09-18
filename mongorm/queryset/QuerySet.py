@@ -17,7 +17,6 @@ class QuerySet(object):
 			self.orderBy = orderBy[:]
 		self._savedCount = None
 		self._savedItems = None
-		self._savedBuiltItems = None
 		if query is None:
 			self.query = Q( )
 		else:
@@ -194,12 +193,8 @@ class QuerySet(object):
 		#print 'iter:', self.query.toMongo( self.document ), self.collection
 		if self._savedItems is None:
 			self._savedItems = self._do_find( )
-			self._savedBuiltItems = []
-		for i,item in enumerate(self._savedItems):
-			if i >= len(self._savedBuiltItems):
-				self._savedBuiltItems.append( self._getNewInstance( item ) )
-			
-			yield self._savedBuiltItems[i]
+		for item in self._savedItems:
+			yield self._getNewInstance( item )
 	
 	def __getitem__( self, index ):
 		if isinstance(index, int):
