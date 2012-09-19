@@ -287,3 +287,24 @@ def test_in_operator_with_ref( ):
 		"spam spam spam beans spam",
 		"bacon and eggs"
 	] ).count( ) == 3
+
+def test_multiple_iteration( ):
+	"""Tests multiple iterators work"""
+	connect( 'test_mongorm' )
+
+	class Test(Document):
+		name = StringField( )
+
+	# Add some objects to the collection in case
+	Test( name="John" ).save( )
+	Test( name="Eric" ).save( )
+	Test( name="Graham" ).save( )
+
+	assert Test.objects.count( ) >= 3
+
+	query = Test.objects.all( )
+	it1 = iter(query)
+	it2 = iter(query)
+
+	for i in xrange(Test.objects.count( )):
+		assert next(it1) == next(it2)
