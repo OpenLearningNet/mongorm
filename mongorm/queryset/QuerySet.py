@@ -193,8 +193,7 @@ class QuerySet(object):
 		#print 'iter:', self.query.toMongo( self.document ), self.collection
 		if self._savedItems is None:
 			self._savedItems = self._do_find( )
-		for item in self._savedItems:
-			yield self._getNewInstance( item )
+		return (self._getNewInstance( item ) for item in self._savedItems.clone( ))
 	
 	def __getitem__( self, index ):
 		if isinstance(index, int):
