@@ -1,8 +1,10 @@
 from mongorm import *
 try:
 	from pymongo.dbref import DBRef
+	from pymongo.objectid import ObjectId
 except ImportError:
 	from bson.dbref import DBRef
+	from bson.objectid import ObjectId
 
 from pytest import raises
 
@@ -32,3 +34,19 @@ def test_equality( ):
 	
 	with raises(TestDocument.MultipleObjectsReturned):
 		TestDocument.objects.get(s="hello")
+
+def test_non_existing_document( ):
+	"""Tests to make sure non-existing documents raise the correct error."""
+	connect( 'test_mongorm' )
+
+	class TestDocument(Document):
+		s = StringField( )
+
+	TestDocument.objects.delete( )
+
+	item = TestDocument( )
+	item._is_lazy = True
+	item._data['_id'] = 123
+
+	with raises(TestDocument.DoesNotExist):
+		item.s
