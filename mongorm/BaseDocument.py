@@ -71,6 +71,8 @@ class BaseDocument(object):
 			if field.dbField not in self._data:
 				# field not retrieved from database! load whole document. weeee
 				result = connection.getDatabase( )[self._collection].find_one( { '_id': self._data['_id'] } )
+				if result is None:
+					raise self.DoesNotExist
 				self._fromMongo( result, overwrite=False )
 				
 				self._is_lazy = False
