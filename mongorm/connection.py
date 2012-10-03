@@ -5,14 +5,18 @@ database = None
 
 connectionSettings = None
 
-def connect( database, **kwargs ):
-	global connectionSettings
+def connect( databaseName, **kwargs ):
+	global database, connection, connectionSettings
 	
 	connectionSettings = {}
 	connectionSettings.update( kwargs )
 	connectionSettings.update( {
-		'database': database
+		'database': databaseName
 	} )
+
+	# Reset database & connection
+	connection = None
+	database = None
 
 def getConnection( ):
 	global database, connection, connectionSettings
