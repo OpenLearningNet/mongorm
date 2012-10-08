@@ -147,6 +147,72 @@ def test_and_or( ):
 					]},
 				]}
 
+def test_do_merge_or( ):
+	"""Tests to make sure do_merge works with 'or' operator"""
+	connect( 'test_mongorm' )
+
+	class TestAndOr(Document):
+		name = StringField( )
+		path = StringField( )
+		index = ListField( StringField( ) )
+
+	query = Q( name="spam" ) | Q( name="eggs" )
+	assert query.toMongo( TestAndOr ) == {
+		'$or': [{'name': "spam"}, {'name': "eggs"}]
+	}
+
+	query &= Q( path=u"Green Midget Café" )
+	assert query.toMongo( TestAndOr ) == {
+		'$or': [{'name': "spam"}, {'name': "eggs"}],
+		'path': u"Green Midget Café"
+	}
+
+	query |= Q( index='11' )
+	assert query.toMongo( TestAndOr ) == {
+		'$or': [{
+			'$or': [{'name': "spam"}, {'name': "eggs"}],
+			'path': u"Green Midget Café"
+		}, {
+			'index': '11'
+		}]
+	}
+
+def test_do_merge_and( ):
+	"""Tests to make sure do_merge works with 'and' operator"""
+	connect( 'test_mongorm' )
+
+	class TestAndOr(Document):
+		name = StringField( )
+		path = StringField( )
+		index = ListField( StringField( ) )
+
+	query = Q( name="spam" ) & Q( name="eggs" )
+	assert query.toMongo( TestAndOr ) == {
+		'$and': [
+			{'name': "spam"}, {'name': "eggs"}
+		]
+	}
+
+	query &= Q( path=u"Green Midget Café" )
+	assert query.toMongo( TestAndOr ) == {
+		'$and': [
+			{'name': "spam"}, {'name': "eggs"}
+		],
+		'path': u"Green Midget Café"
+	}
+
+	query &= Q( index='123' ) & Q( index='456' )
+	assert query.toMongo( TestAndOr ) == {
+		'$and': [{
+			'$and': [
+				{'name': "spam"}, {'name': "eggs"}
+			],
+			'path': u"Green Midget Café"
+		}, {
+			'$and': [{'index': "123"}, {'index': "456"}]
+		}]
+	}
+
 def test_referencefield_none( ):
 	"""Make sure ReferenceField can be searched for None"""
 	connect( 'test_mongorm' )

@@ -139,9 +139,9 @@ class Q(object):
 		if len(self.query) == 0: return other
 		if len(other.query) == 0: return self
 		
-		if op in self.query:
+		if op in self.query and len(self.query) == 1:
 			items = self.query[op] + [other]
-		elif op in other.query:
+		elif op in other.query and len(self.query) == 1:
 			items = other.query[op] + [self]
 		else:
 			items = [ self, other ]
