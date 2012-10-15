@@ -25,15 +25,16 @@ class DateTimeField(BaseField):
 				# oh well we tried
 				pass
 
-		if pythonValue is not None and not isinstance(pythonValue, datetime):
-			raise ValueError, "Value must be a datetime object not %r" % (pythonValue,)
+		if pythonValue is not None:
+			if not isinstance(pythonValue, datetime):
+				raise ValueError, "Value must be a datetime object not %r" % (pythonValue,)
 
-		if PYTZ and pythonValue is not None and pythonValue.tzinfo is not None:
-			pythonValue = pythonValue.astimezone( utc )
-			pythonValue = pythonValue.replace( tzinfo=None )
+			if PYTZ and pythonValue.tzinfo is not None:
+				pythonValue = pythonValue.astimezone( utc )
+				pythonValue = pythonValue.replace( tzinfo=None )
 
-		# mongo doesn't handle microseconds
-		pythonValue = pythonValue.replace( microsecond=0 )
+			# mongo doesn't handle microseconds
+			pythonValue = pythonValue.replace( microsecond=0 )
 
 		return pythonValue
 	
