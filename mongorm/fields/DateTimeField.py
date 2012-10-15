@@ -32,6 +32,9 @@ class DateTimeField(BaseField):
 			pythonValue = pythonValue.astimezone( utc )
 			pythonValue = pythonValue.replace( tzinfo=None )
 
+		# mongo doesn't handle microseconds
+		pythonValue = pythonValue.replace( microsecond=0 )
+
 		return pythonValue
 	
 	def toPython( self, bsonValue ):
