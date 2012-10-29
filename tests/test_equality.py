@@ -89,11 +89,14 @@ def test_equality_with_datetime( ):
 		timestamp = DateTimeField( )
 
 	# Get current UTC time to the nearest millisecond
-	now = datetime.utcnow( ).replace( microsecond=0 )
+	now = datetime.utcnow( )
+	now = now.replace( microsecond=(now.microsecond//1000)*1000 )
 
 	if PYTZ:
 		now = UTC.localize( now )
-		now = now.astimezone( timezone( "Australia/Sydney" ) )
+		tz = timezone( "Australia/Sydney" )
+		now = now.astimezone( tz )
+		now = tz.normalize( now )
 
 	t = TestDateTime( timestamp=now )
 	t.save( )
