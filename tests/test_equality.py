@@ -47,6 +47,7 @@ def test_equality( ):
 
 def test_equality_with_none( ):
 	"""Tests to make sure comparisons with None work."""
+	connect( 'test_mongorm' )
 
 	class TestDocument(Document):
 		s = StringField( )
@@ -67,7 +68,8 @@ def test_equality_with_none( ):
 	assert a.s is None
 
 def test_equality_with_unicode( ):
-	"""Tests to make sure comparisons with None work."""
+	"""Tests to make sure comparisons with unicode work."""
+	connect( 'test_mongorm' )
 
 	class TestDocument(Document):
 		s = StringField( )
@@ -81,6 +83,7 @@ def test_equality_with_unicode( ):
 
 def test_equality_with_datetime( ):
 	"""Tests to make sure comparisons with datetime objects work."""
+	connect( 'test_mongorm' )
 
 	class TestDateTime(Document):
 		timestamp = DateTimeField( )
