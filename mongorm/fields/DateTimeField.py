@@ -16,6 +16,8 @@ except ImportError:
 else:
 	ISO8601 = True
 
+EPOCH = datetime( 1970, 1, 1 )
+
 class DateTimeField(BaseField):
 	def fromPython( self, pythonValue, dereferences=[], modifier=None ):
 		if ISO8601 and isinstance(pythonValue, basestring):
@@ -33,8 +35,12 @@ class DateTimeField(BaseField):
 				pythonValue = pythonValue.astimezone( utc )
 				pythonValue = pythonValue.replace( tzinfo=None )
 
-			# mongo doesn't handle microseconds
-			pythonValue = pythonValue.replace( microsecond=0 )
+			if pythonValue >= EPOCH:
+				# mongo doesn't handle microseconds
+				pythonValue = pythonValue.replace( microsecond=(pythonValue.microsecond//1000)*1000 )
+			else:
+				# workaround for https://jira.mongodb.org/browse/PYTHON-392
+				pythonValue = pythonValue.replace( microsecond=0 )
 
 		return pythonValue
 	

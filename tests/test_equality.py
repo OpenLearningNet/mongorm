@@ -122,3 +122,40 @@ def test_equality_with_datetime( ):
 		t = TestDateTime.objects.get( pk=t.id )
 
 		assert t.timestamp == now
+
+def test_equality_with_old_datetime( ):
+	"""Tests to make sure comparisons with datetime objects
+	before the epoch work."""
+	connect( 'test_mongorm' )
+
+	class TestDateTime(Document):
+		timestamp = DateTimeField( )
+
+	bestDaysOfMyLife = datetime( 1969, 1, 1, 12, 0, 0, 9001 )
+
+	if PYTZ:
+		tz = timezone( "Australia/Sydney" )
+		bestDaysOfMyLife = tz.localize( bestDaysOfMyLife )
+		bestDaysOfMyLife = tz.normalize( bestDaysOfMyLife )
+
+	t = TestDateTime( timestamp=bestDaysOfMyLife )
+	t.save( )
+
+	assert t.timestamp == bestDaysOfMyLife.replace( microsecond=0 )
+
+	t = TestDateTime.objects.get( pk=t.id )
+
+	assert t.timestamp == bestDaysOfMyLife.replace( microsecond=0 )
+
+	try:
+		t.timestamp = bestDaysOfMyLife.isoformat( )
+		t.save( )
+	except ValueError:
+		assert not ISO8601
+	else:
+		assert ISO8601
+
+	if ISO8601:
+		t = TestDateTime.objects.get( pk=t.id )
+
+		assert t.timestamp == bestDaysOfMyLife.replace( microsecond=0 )
