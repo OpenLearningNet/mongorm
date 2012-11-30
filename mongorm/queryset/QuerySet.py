@@ -203,7 +203,7 @@ class QuerySet(object):
 		elif isinstance(index, slice):
 			getOne = False
 			skip = index.start or 0
-			limit = index.stop - skip
+			limit = index.stop - skip if index.stop is not None else 0
 			assert index.step is None, "Slicing with step not supported by mongorm"
 		else:
 			assert False, "item not an index"
