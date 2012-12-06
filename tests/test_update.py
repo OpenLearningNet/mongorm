@@ -57,4 +57,101 @@ def test_update_types( ):
 	assert TestB.objects._prepareActions(
 		set__genericval=doc
 	) == {'$set': {'genericval': {'_types': ['TestB'], '_ref': DBRef('testb', doc.id)}}}
-	
+
+def test_push_pull_operators( ):
+	"""Tests to make sure the push & pull operators work"""
+
+	class TestPushPull(Document):
+		values = ListField( StringField( ) )
+
+	# Clear all objects so that counts will be correct
+	TestPushPull.objects.all( ).delete( )
+
+	# Check correct mongo is being produced
+
+	assert TestPushPull.objects._prepareActions(
+		push__values='spam'
+	) == {'$push': {'values': 'spam'}}
+
+	assert TestPushPull.objects._prepareActions(
+		pushAll__values=['spam', 'eggs']
+	) == {'$pushAll': {'values': ['spam', 'eggs']}}
+
+	assert TestPushPull.objects._prepareActions(
+		pull__values='spam'
+	) == {'$pull': {'values': 'spam'}}
+
+	assert TestPushPull.objects._prepareActions(
+		pullAll__values=['spam', 'eggs']
+	) == {'$pullAll': {'values': ['spam', 'eggs']}}
+
+	# OK let's check with some real data
+
+	a = TestPushPull( values=[] ).save( )
+	assert a.values == []
+
+	b = TestPushPull( values=['eggs'] ).save( )
+	assert b.values == ['eggs']
+
+	assert TestPushPull.objects.update(
+		safeUpdate=True,
+		updateAllDocuments=True,
+		push__values='spam'
+	) == 2
+
+	assert TestPushPull.objects.get( pk=a.id ).values == ['spam']
+	assert TestPushPull.objects.get( pk=b.id ).values == ['eggs', 'spam']
+
+	assert TestPushPull.objects.update(
+		safeUpdate=True,
+		updateAllDocuments=True,
+		pushAll__values=[]
+	) == 2
+
+	assert TestPushPull.objects.get( pk=a.id ).values == ['spam']
+	assert TestPushPull.objects.get( pk=b.id ).values == ['eggs', 'spam']
+
+	assert TestPushPull.objects.update(
+		safeUpdate=True,
+		updateAllDocuments=True,
+		pullAll__values=[]
+	) == 2
+
+	assert TestPushPull.objects.get( pk=a.id ).values == ['spam']
+	assert TestPushPull.objects.get( pk=b.id ).values == ['eggs', 'spam']
+
+	assert TestPushPull.objects.update(
+		safeUpdate=True,
+		updateAllDocuments=True,
+		pull__values='spam'
+	) == 2
+
+	assert TestPushPull.objects.get( pk=a.id ).values == []
+	assert TestPushPull.objects.get( pk=b.id ).values == ['eggs']
+
+	assert TestPushPull.objects.update(
+		safeUpdate=True,
+		updateAllDocuments=True,
+		pull__values='eggs'
+	) == 2
+
+	assert TestPushPull.objects.get( pk=a.id ).values == []
+	assert TestPushPull.objects.get( pk=b.id ).values == []
+
+	assert TestPushPull.objects.update(
+		safeUpdate=True,
+		updateAllDocuments=True,
+		pushAll__values=['spam', 'eggs']
+	) == 2
+
+	assert TestPushPull.objects.get( pk=a.id ).values == ['spam', 'eggs']
+	assert TestPushPull.objects.get( pk=b.id ).values == ['spam', 'eggs']
+
+	assert TestPushPull.objects.update(
+		safeUpdate=True,
+		updateAllDocuments=True,
+		pullAll__values=['spam', 'eggs']
+	) == 2
+
+	assert TestPushPull.objects.get( pk=a.id ).values == []
+	assert TestPushPull.objects.get( pk=b.id ).values == []

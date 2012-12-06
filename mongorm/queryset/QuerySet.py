@@ -77,7 +77,7 @@ class QuerySet(object):
 		for action, value in actions.iteritems( ):
 			assert '__' in action, 'Action "%s" not legal for update' % (action,)
 			modifier, fieldName = action.split( '__', 1 )
-			assert modifier in ['set', 'unset', 'inc', 'dec', 'push', 'pushAll'], 'Unknown modifier "%s"' % modifier
+			assert modifier in ['set', 'unset', 'inc', 'dec', 'push', 'pushAll', 'pull', 'pullAll'], 'Unknown modifier "%s"' % modifier
 			
 			if '$'+modifier not in updates:
 				updates['$'+modifier] = {}
