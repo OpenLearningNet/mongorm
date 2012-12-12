@@ -7,12 +7,13 @@ from mongorm.DocumentRegistry import DocumentRegistry
 from mongorm.blackMagic import serialiseTypesForDocumentType
 
 class QuerySet(object):
-	def __init__( self, document, collection, query=None, orderBy=None, onlyFields=None ):
+	def __init__( self, document, collection, query=None, orderBy=None, onlyFields=None, timeout=True ):
 		self.document = document
 		self.documentTypes = serialiseTypesForDocumentType( document )
 		self.collection = collection
 		self.orderBy = []
 		self.onlyFields = onlyFields
+		self.timeout = timeout
 		if orderBy is not None:
 			self.orderBy = orderBy[:]
 		self._savedCount = None
@@ -55,6 +56,15 @@ class QuerySet(object):
 		newQuery = self.query & query
 		#print 'filter:', newQuery.toMongo( self.document )
 		return QuerySet( self.document, self.collection, query=newQuery, orderBy=self.orderBy, onlyFields=self.onlyFields )
+
+	def no_timeout( self ):
+		kwargs = {
+			'query': self.query,
+			'orderBy': self.orderBy,
+			'onlyFields': self.onlyFields,
+			'timeout': False
+		}
+		return QuerySet( self.document, self.collection, **kwargs )
 	
 	def count( self ):
 		if self._savedCount is None:
@@ -175,6 +185,9 @@ class QuerySet(object):
 		
 		if self.onlyFields is not None:
 			kwargs['fields'] = self.onlyFields
+
+		if 'timeout' not in kwargs:
+			kwargs['timeout'] = self.timeout
 		
 		search = self._get_query( )
 		return self.collection.find( search, **kwargs )
