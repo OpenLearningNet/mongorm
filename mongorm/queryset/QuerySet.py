@@ -7,13 +7,14 @@ from mongorm.DocumentRegistry import DocumentRegistry
 from mongorm.blackMagic import serialiseTypesForDocumentType
 
 class QuerySet(object):
-	def __init__( self, document, collection, query=None, orderBy=None, onlyFields=None, timeout=True ):
+	def __init__( self, document, collection, query=None, orderBy=None, onlyFields=None, timeout=True, readPref='primaryPreferred' ):
 		self.document = document
 		self.documentTypes = serialiseTypesForDocumentType( document )
 		self.collection = collection
 		self.orderBy = []
 		self.onlyFields = onlyFields
 		self.timeout = timeout
+		self.readPref = readPref
 		if orderBy is not None:
 			self.orderBy = orderBy[:]
 		self._savedCount = None
@@ -62,7 +63,18 @@ class QuerySet(object):
 			'query': self.query,
 			'orderBy': self.orderBy,
 			'onlyFields': self.onlyFields,
-			'timeout': False
+			'timeout': False,
+			'readPref': self.readPref
+		}
+		return QuerySet( self.document, self.collection, **kwargs )
+
+	def read_preference( self, readPref ):
+		kwargs = {
+			'query': self.query,
+			'orderBy': self.orderBy,
+			'onlyFields': self.onlyFields,
+			'timeout': self.timeout,
+			'readPref': readPref
 		}
 		return QuerySet( self.document, self.collection, **kwargs )
 	
@@ -188,6 +200,9 @@ class QuerySet(object):
 
 		if 'timeout' not in kwargs:
 			kwargs['timeout'] = self.timeout
+
+		if 'read_preference' not in kwargs:
+			kwargs['read_preference'] = self.readPref
 		
 		search = self._get_query( )
 		return self.collection.find( search, **kwargs )
