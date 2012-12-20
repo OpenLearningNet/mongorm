@@ -374,3 +374,18 @@ def test_multiple_iteration( ):
 
 	for i in xrange(Test.objects.count( )):
 		assert next(it1) == next(it2)
+
+def test_secondary_read_pref( ):
+	"""Tests read_preference works"""
+	connect( 'test_mongorm' )
+
+	class Test(Document):
+		name = StringField( )
+
+	# Add some objects to the collection in case
+	Test( name="John" ).save( )
+	Test( name="Eric" ).save( )
+	Test( name="Graham" ).save( )
+
+	assert Test.objects.read_preference( 'secondary' ).count( ) >= 3
+	assert Test.objects.filter( name="John" ).read_preference( ReadPreference.NEAREST )[0].name == "John"
