@@ -1,4 +1,5 @@
 from mongorm import *
+from pymongo import ReadPreference
 
 def teardown_module(module):
 	DocumentRegistry.clear( )
@@ -388,4 +389,4 @@ def test_secondary_read_pref( ):
 	Test( name="Graham" ).save( )
 
 	assert Test.objects.read_preference( 'secondary' ).count( ) >= 3
-	assert Test.objects.filter( name="John" ).read_preference( ReadPreference.NEAREST )[0].name == "John"
+	assert Test.objects.filter( name="John" ).read_preference( ReadPreference.SECONDARY )[0].name == "John"
