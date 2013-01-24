@@ -56,7 +56,7 @@ class QuerySet(object):
 			query = Q( **search )
 		newQuery = self.query & query
 		#print 'filter:', newQuery.toMongo( self.document )
-		return QuerySet( self.document, self.collection, query=newQuery, orderBy=self.orderBy, onlyFields=self.onlyFields )
+		return QuerySet( self.document, self.collection, query=newQuery, orderBy=self.orderBy, onlyFields=self.onlyFields, timeout=self.timeout, readPref=self.readPref )
 
 	def no_timeout( self ):
 		kwargs = {
@@ -176,11 +176,11 @@ class QuerySet(object):
 	def order_by( self, *fields ):
 		newOrderBy = self.orderBy[:]
 		newOrderBy.extend( fields )
-		return QuerySet( self.document, self.collection, query=self.query, orderBy=newOrderBy, onlyFields=self.onlyFields )
+		return QuerySet( self.document, self.collection, query=self.query, orderBy=newOrderBy, onlyFields=self.onlyFields, timeout=self.timeout, readPref=self.readPref )
 	
 	def only( self, *fields ):
 		onlyFields = set(fields)
-		return QuerySet( self.document, self.collection, query=self.query, orderBy=self.orderBy, onlyFields=onlyFields )
+		return QuerySet( self.document, self.collection, query=self.query, orderBy=self.orderBy, onlyFields=onlyFields, timeout=self.timeout, readPref=self.readPref )
 	
 	def ignore( self, *fields ):
 		current = set(self.document._fields.keys())
