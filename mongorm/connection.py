@@ -14,6 +14,9 @@ def connect( databaseName, **kwargs ):
 		'database': databaseName
 	} )
 
+	if 'safe' not in connectionSettings and 'w' not in connectionSettings:
+		connectionSettings['w'] = 1
+
 	# Reset database & connection
 	connection = None
 	database = None
@@ -26,7 +29,7 @@ def getConnection( ):
 	if connection is None:
 		connectionArgs = {}
 		
-		for key in ['host', 'port', 'replicaSet']:
+		for key in ('host', 'port', 'replicaSet', 'safe', 'w'):
 			if key in connectionSettings:
 				connectionArgs[key] = connectionSettings[key]
 		
