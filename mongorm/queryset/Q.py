@@ -1,3 +1,21 @@
+MONGO_COMPARISONS = frozenset(['gt', 'lt', 'lte', 'gte', 'exists', 'ne', 'all', 'in', 'elemMatch'])
+REGEX_COMPARISONS = {
+	'contains': ( '%s', '' ),
+	'icontains': ( '%s', 'i' ),
+
+	'iexact': ( '^%s$', 'i' ),
+
+	'startswith': ( '^%s', '' ),
+	'istartswith': ( '^%s', 'i' ),
+
+	'endswith': ( '%s$', '' ),
+	'iendswith': ( '%s$', 'i' ),
+
+	'matches': ( None, '' ),
+	'imatches': ( None, 'i' ),
+}
+ALL_COMPARISONS = MONGO_COMPARISONS | frozenset(REGEX_COMPARISONS)
+ARRAY_VALUE_COMPARISONS = frozenset(['all', 'in'])
 
 class Q(object):
 	def __init__( self, _query=None, **search ):
@@ -20,25 +38,6 @@ class Q(object):
 			
 			fieldName = name
 			
-			MONGO_COMPARISONS = ['gt', 'lt', 'lte', 'gte', 'exists', 'ne', 'all', 'in', 'elemMatch']
-			REGEX_COMPARISONS = {
-				'contains': ( '%s', '' ),
-				'icontains': ( '%s', 'i' ),
-
-				'iexact': ( '^%s$', 'i' ),
-
-				'startswith': ( '^%s', '' ),
-				'istartswith': ( '^%s', 'i' ),
-				
-				'endswith': ( '%s$', '' ),
-				'iendswith': ( '%s$', 'i' ),
-				
-				'matches': ( None, '' ),
-				'imatches': ( None, 'i' ),
-			}
-			ALL_COMPARISONS = MONGO_COMPARISONS + REGEX_COMPARISONS.keys()
-			ARRAY_VALUE_COMPARISONS = ['all', 'in']
-
 			comparison = None
 			dereferences = []
 			if '__' in fieldName:
