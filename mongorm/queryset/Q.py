@@ -116,7 +116,13 @@ class Q(object):
 				else:
 					newSearch[targetSearchKey] = valueMapper(searchValue)
 			else:
-				newSearch[targetSearchKey] = valueMapper(searchValue)
+				newValue = valueMapper( searchValue )
+				if isinstance(newValue, dict):
+					oldValue = newSearch.get( targetSearchKey )
+					if isinstance(oldValue, dict):
+						oldValue.update( newValue )
+						newValue = oldValue
+				newSearch[targetSearchKey] = newValue
 		
 		return newSearch
 	

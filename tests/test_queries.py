@@ -390,3 +390,28 @@ def test_secondary_read_pref( ):
 
 	assert Test.objects.read_preference( 'secondary' ).count( ) >= 3
 	assert Test.objects.filter( name="John" ).read_preference( ReadPreference.SECONDARY )[0].name == "John"
+
+def test_multiple_operators( ):
+	"""Tests operators can be combined"""
+	connect( 'test_mongorm' )
+
+	class TestRange(Document):
+		number = IntegerField( )
+
+	# Clear objects so that counts will be correct
+	TestRange.objects.all( ).delete( )
+
+	TestRange( number=0 ).save( )
+	TestRange( number=1 ).save( )
+	TestRange( number=2 ).save( )
+	TestRange( number=3 ).save( )
+
+	query = Q( number__gt=0, number__lt=3 )
+
+	assert query.toMongo( TestRange ) == {
+		'number': {
+			'$lt': 3,
+			'$gt': 0
+		}
+	}
+	assert TestRange.objects.filter( query ).count( ) == 2
