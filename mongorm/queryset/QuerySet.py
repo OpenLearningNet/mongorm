@@ -19,6 +19,7 @@ class QuerySet(object):
 			self.orderBy = orderBy[:]
 		self._savedCount = None
 		self._savedItems = None
+		self._cursor = None
 		if query is None:
 			self.query = Q( )
 		else:
@@ -80,14 +81,19 @@ class QuerySet(object):
 	
 	def count( self ):
 		if self._savedCount is None:
-			if self._savedItems is None:
-				self._savedCount = self.collection.find( self._get_query( ) ).count( )
+			if self._savedItems is not None:
+				self._savedCount = len(self._savedItems)
+			elif self._cursor is not None:
+				self._savedCount = self._cursor.count( )
 			else:
-				self._savedCount = self._savedItems.count( )
+				self._savedCount = self.collection.find( self._get_query( ) ).count( )
 		
 		return self._savedCount
 	
 	def __len__( self ):
+		# if we're being treated as a standard python container
+		# then we should save the items as they'll probably get accessed next
+		self._savedItems = tuple(self._do_find( ))
 		return self.count( )
 	
 	def delete( self ):
@@ -219,9 +225,13 @@ class QuerySet(object):
 	
 	def __iter__( self ):
 		#print 'iter:', self.query.toMongo( self.document ), self.collection
-		if self._savedItems is None:
-			self._savedItems = self._do_find( )
-		return (self._getNewInstance( item ) for item in self._savedItems.clone( ))
+		if self._savedItems is not None:
+			iterator = self._savedItems
+		else:
+			if self._cursor is None:
+				self._cursor = self._do_find( )
+			iterator = self._cursor.clone( )
+		return (self._getNewInstance( item ) for item in iterator)
 	
 	def __getitem__( self, index ):
 		if isinstance(index, int):
@@ -238,7 +248,7 @@ class QuerySet(object):
 		
 		#print self.query.toMongo( self.document )
 		#items = self.collection.find( self.query.toMongo( self.document ), skip=skip, limit=limit )
-		items = self._do_find( skip=skip, limit=limit )
+		items = self._savedItems if self._savedItems is not None else self._do_find( skip=skip, limit=limit )
 		
 		if getOne:
 			try:
