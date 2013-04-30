@@ -50,3 +50,60 @@ def test_non_existing_document( ):
 
 	with raises(TestDocument.DoesNotExist):
 		item.s
+
+def test_non_existing_attribute( ):
+	"""Tests to make sure non-existing attributes raise the correct error."""
+	connect( 'test_mongorm' )
+
+	class TestDocument(Document):
+		s = StringField( )
+
+	item = TestDocument( )
+
+	with raises(AttributeError):
+		item.t
+
+def test_non_existing_private_attribute( ):
+	"""Tests to make sure non-existing private attributes raise the correct error."""
+	connect( 'test_mongorm' )
+
+	class TestDocument(Document):
+		s = StringField( )
+
+	item = TestDocument( )
+
+	with raises(AttributeError):
+		item.__getstate__
+
+def test_non_existing_attribute_lazy( ):
+	"""Tests to make sure non-existing attributes in lazy mode raise the correct error."""
+	connect( 'test_mongorm' )
+
+	class TestDocument(Document):
+		s = StringField( )
+
+	item = TestDocument( )
+	item.s = 'spam'
+	item.save( )
+
+	with raises(AttributeError):
+		TestDocument.objects.get( pk=item.id ).t
+
+def test_non_existing_attribute_init( ):
+	"""Tests to make sure non-existing attributes on init raise the correct error."""
+	connect( 'test_mongorm' )
+
+	class TestDocument(Document):
+		s = StringField( )
+
+	with raises(AttributeError):
+		TestDocument( t='spam' )
+
+def test_unset_attribute_none( ):
+	"""Tests to make sure unset (but existing) attributes return None."""
+	connect( 'test_mongorm' )
+
+	class TestDocument(Document):
+		s = StringField( )
+
+	assert TestDocument( ).s is None

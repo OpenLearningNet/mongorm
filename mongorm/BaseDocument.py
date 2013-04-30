@@ -31,43 +31,31 @@ class BaseDocument(object):
 		
 		return self
 
-	# The following three methods are used for pickling/unpickling.
-	# If it weren't for the fact that  __getattr__ returns None
-	# for non-existing attributes (rather than raising an AttributeError),
-	# we would not need to define them.
-
-	def __getstate__( self ):
-		return self.__dict__
-
-	def __setstate__( self, state ):
-		self.__dict__.update( state )
-
-	def __getnewargs__( self ):
-		return ( )
-
 	def __setattr__( self, name, value ):
-		assert (name[0] == '_' and hasattr(self, name)) or name in self._fields, \
-			"Field '%s' does not exist in document '%s'" \
-			% (name, self.__class__.__name__)
-		
-		if name in self._fields:
+		try:
 			field = self._fields[name]
+		except KeyError:
+			if name.startswith( '_' ) and hasattr(self, name):
+				super(BaseDocument, self).__setattr__( name, value )
+			else:
+				raise AttributeError, "'%s' has no attribute '%s'" % (self.__class__.__name__, name)
+		else:
 			mongoValue = field.fromPython( value )
 			self._data[field.dbField] = mongoValue
 			pythonValue = None
 			if mongoValue is not None:
 				pythonValue = field.toPython( mongoValue )
 			self._values[name] = pythonValue
-		else:
-			assert name.startswith( '_' ), 'Only internal variables should ever be set as an attribute'
-			super(BaseDocument, self).__setattr__( name, value )
 	
 	def __getattr__( self, name ):
-		if name not in self._values and self._is_lazy and \
+		if (not self._values or name not in self._values) and self._is_lazy and \
 			'_id' in self._data and self._data['_id'] is not None:
 			# field is being accessed and the object is currently in lazy mode
 			# may need to retrieve rest of document
-			field = self._fields[name]
+			try:
+				field = self._fields[name]
+			except KeyError:
+				raise AttributeError, "'%s' has no attribute '%s'" % (self.__class__.__name__, name)
 			if field.dbField not in self._data:
 				# field not retrieved from database! load whole document. weeee
 				result = connection.getDatabase( )[self._collection].find_one( { '_id': self._data['_id'] } )
@@ -78,9 +66,14 @@ class BaseDocument(object):
 				self._is_lazy = False
 		
 		default = None
-		field = self._fields.get( name, None )
+		try:
+			field = self._fields[name]
+		except KeyError:
+			raise AttributeError, "'%s' has no attribute '%s'" % (self.__class__.__name__, name)
+
 		if field is not None:
 			default = field.getDefault( )
+
 		if not name in self._values:
 			self._values[name] = default
 		
