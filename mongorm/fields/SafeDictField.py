@@ -2,8 +2,10 @@ from mongorm.fields.DictField import DictField
 
 from collections import deque
 from operator import methodcaller
+from copy import deepcopy
 
 def deepCoded( dictionary, coder ):
+	dictionary = deepcopy( dictionary ) # leave the original intact
 	toCode = deque( [dictionary] )
 	while toCode:
 		nextDictionary = toCode.popleft( )
