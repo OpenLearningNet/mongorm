@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='mongorm',
-      version='0.4.1',
+      version='0.4.2',
       packages=find_packages(),
       author='Theo Julienne',
       author_email='theo@icy.com.au',
