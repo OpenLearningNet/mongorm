@@ -76,9 +76,13 @@ class DocumentMetaclass(type):
 			meta = attrs['meta']
 			if 'indexes' in meta:
 				indexes = meta['indexes']
+				background = meta.get( 'backgroundIndexes', False )
+				prune = meta.get( 'pruneIndexes', False )
 				
 				_database = getDatabase( )
 				_collection = _database[collection]
+
+				indexKeys = set(tuple(index['key']) for index in _collection.index_information( ).itervalues( ))
 				
 				for index in indexes:
 					if not isinstance(index, (list,tuple)):
@@ -88,7 +92,16 @@ class DocumentMetaclass(type):
 							return fields[fieldName].optimalIndex( )
 						return fieldName
 					pyMongoIndexKeys = sortListToPyMongo( index, indexConverter )
-					_collection.ensure_index( pyMongoIndexKeys )
+					immutablePyMongoIndexKeys = tuple(pyMongoIndexKeys)
+					if immutablePyMongoIndexKeys not in indexKeys:
+						_collection.ensure_index( pyMongoIndexKeys, background=background )
+					else:
+						indexKeys.remove( immutablePyMongoIndexKeys )
+
+				if prune:
+					for index in indexKeys:
+						_collection.drop_index( index )
+
 		
 		# add a query set manager if none exists already
 		if 'objects' not in attrs:
