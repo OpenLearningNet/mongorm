@@ -1,15 +1,15 @@
 from setuptools import setup, find_packages
 
 setup(name='mongorm',
-      version='0.4.2',
+      version='0.5.0',
       packages=find_packages(),
-      author='Theo Julienne',
-      author_email='theo@icy.com.au',
-      url='http://www.icy.com.au/???',
+      author='Theo Julienne, John Garland',
+      author_email='theo@icy.com.au, john@openlearning.com',
+      url='https://github.com/OpenLearningNet/mongorm',
       license='MIT',
       include_package_data=True,
       description='Mongorm',
       long_description='Mongorm',
       platforms=['any'],
-      install_requires=['pymongo', 'pysignals'],
+      install_requires=['pymongo >= 2.4.2', 'pysignals'],
 )

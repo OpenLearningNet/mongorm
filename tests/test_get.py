@@ -1,10 +1,6 @@
 from mongorm import *
-try:
-	from pymongo.dbref import DBRef
-	from pymongo.objectid import ObjectId
-except ImportError:
-	from bson.dbref import DBRef
-	from bson.objectid import ObjectId
+from bson.dbref import DBRef
+from bson.objectid import ObjectId
 
 from pytest import raises
 

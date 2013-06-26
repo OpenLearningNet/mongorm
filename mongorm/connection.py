@@ -1,4 +1,4 @@
-from pymongo import Connection
+from pymongo import MongoClient
 
 connection = None
 database = None
@@ -30,7 +30,7 @@ def getConnection( ):
 			if key in connectionSettings:
 				connectionArgs[key] = connectionSettings[key]
 		
-		connection = Connection( **connectionArgs )
+		connection = MongoClient( **connectionArgs )
 	
 	return connection
 

@@ -1,7 +1,4 @@
-try:
-	from pymongo import objectid, dbref
-except ImportError:
-	from bson import objectid, dbref
+from bson import objectid, dbref
 import bson.errors
 
 from mongorm.fields.BaseField import BaseField
