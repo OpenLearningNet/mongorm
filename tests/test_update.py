@@ -1,8 +1,5 @@
 from mongorm import *
-try:
-	from pymongo.dbref import DBRef
-except ImportError:
-	from bson.dbref import DBRef
+from bson.dbref import DBRef
 
 def teardown_module(module):
 	DocumentRegistry.clear( )

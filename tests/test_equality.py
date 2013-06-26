@@ -1,8 +1,5 @@
 from mongorm import *
-try:
-	from pymongo.dbref import DBRef
-except ImportError:
-	from bson.dbref import DBRef
+from bson.dbref import DBRef
 
 try:
 	from pytz import timezone, UTC
@@ -131,7 +128,7 @@ def test_equality_with_old_datetime( ):
 	class TestDateTime(Document):
 		timestamp = DateTimeField( )
 
-	bestDaysOfMyLife = datetime( 1969, 1, 1, 12, 0, 0, 9001 )
+	bestDaysOfMyLife = datetime( 1969, 1, 1, 12, 0, 0, 9000 )
 
 	if PYTZ:
 		tz = timezone( "Australia/Sydney" )
@@ -141,11 +138,11 @@ def test_equality_with_old_datetime( ):
 	t = TestDateTime( timestamp=bestDaysOfMyLife )
 	t.save( )
 
-	assert t.timestamp == bestDaysOfMyLife.replace( microsecond=0 )
+	assert t.timestamp == bestDaysOfMyLife
 
 	t = TestDateTime.objects.get( pk=t.id )
 
-	assert t.timestamp == bestDaysOfMyLife.replace( microsecond=0 )
+	assert t.timestamp == bestDaysOfMyLife
 
 	try:
 		t.timestamp = bestDaysOfMyLife.isoformat( )
@@ -158,4 +155,4 @@ def test_equality_with_old_datetime( ):
 	if ISO8601:
 		t = TestDateTime.objects.get( pk=t.id )
 
-		assert t.timestamp == bestDaysOfMyLife.replace( microsecond=0 )
+		assert t.timestamp == bestDaysOfMyLife
