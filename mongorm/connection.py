@@ -26,7 +26,7 @@ def getConnection( ):
 	if connection is None:
 		connectionArgs = {}
 		
-		for key in ['host', 'port', 'replicaSet']:
+		for key in ['host', 'port', 'replicaSet', 'read_preference']:
 			if key in connectionSettings:
 				connectionArgs[key] = connectionSettings[key]
 		
