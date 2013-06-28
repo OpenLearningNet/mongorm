@@ -7,7 +7,7 @@ from mongorm.DocumentRegistry import DocumentRegistry
 from mongorm.blackMagic import serialiseTypesForDocumentType
 
 class QuerySet(object):
-	def __init__( self, document, collection, query=None, orderBy=None, onlyFields=None, timeout=True, readPref='primaryPreferred' ):
+	def __init__( self, document, collection, query=None, orderBy=None, onlyFields=None, timeout=True, readPref=None ):
 		self.document = document
 		self.documentTypes = serialiseTypesForDocumentType( document )
 		self.collection = collection
@@ -201,7 +201,7 @@ class QuerySet(object):
 		if 'timeout' not in kwargs:
 			kwargs['timeout'] = self.timeout
 
-		if 'read_preference' not in kwargs:
+		if 'read_preference' not in kwargs and self.readPref is not None:
 			kwargs['read_preference'] = self.readPref
 		
 		search = self._get_query( )

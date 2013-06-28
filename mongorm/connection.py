@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from pymongo import MongoClient, MongoReplicaSetClient
 
 connection = None
 database = None
@@ -26,11 +26,13 @@ def getConnection( ):
 	if connection is None:
 		connectionArgs = {}
 		
-		for key in ['host', 'port', 'replicaSet']:
+		for key in ['host', 'port', 'replicaSet', 'read_preference']:
 			if key in connectionSettings:
 				connectionArgs[key] = connectionSettings[key]
+
+		client = MongoReplicaSetClient if 'replicaSet' in connectionArgs else MongoClient
 		
-		connection = MongoClient( **connectionArgs )
+		connection = client( **connectionArgs )
 	
 	return connection
 
