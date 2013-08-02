@@ -33,12 +33,12 @@ class QuerySet(object):
 	def get( self, query=None, **search ):
 		if query is None:
 			query = Q( **search )
-		newQuery = self.query & query
+		self.query &= query
 		#self._mergeSearch( search )
 		#print 'get:', newQuery.toMongo( self.document )
 		
 		# limit of 2 so we know if multiple matched without running a count()
-		result = list( self.collection.find( newQuery.toMongo( self.document ), limit=2 ) )
+		result = list( self._do_find( limit=2 ) )
 		
 		if len(result) == 0:
 			raise self.document.DoesNotExist( )
