@@ -6,13 +6,15 @@ from mongorm.DocumentRegistry import DocumentRegistry
 
 from mongorm.blackMagic import serialiseTypesForDocumentType
 
+PROJECTIONS = frozenset(['slice'])
+
 class QuerySet(object):
-	def __init__( self, document, collection, query=None, orderBy=None, onlyFields=None, timeout=True, readPref=None ):
+	def __init__( self, document, collection, query=None, orderBy=None, fields=None, timeout=True, readPref=None ):
 		self.document = document
 		self.documentTypes = serialiseTypesForDocumentType( document )
 		self.collection = collection
 		self.orderBy = []
-		self.onlyFields = onlyFields
+		self._fields = fields
 		self.timeout = timeout
 		self.readPref = readPref
 		if orderBy is not None:
@@ -33,12 +35,12 @@ class QuerySet(object):
 	def get( self, query=None, **search ):
 		if query is None:
 			query = Q( **search )
-		newQuery = self.query & query
+		self.query &= query
 		#self._mergeSearch( search )
 		#print 'get:', newQuery.toMongo( self.document )
 		
 		# limit of 2 so we know if multiple matched without running a count()
-		result = list( self.collection.find( newQuery.toMongo( self.document ), limit=2 ) )
+		result = list( self._do_find( limit=2 ) )
 		
 		if len(result) == 0:
 			raise self.document.DoesNotExist( )
@@ -56,13 +58,13 @@ class QuerySet(object):
 			query = Q( **search )
 		newQuery = self.query & query
 		#print 'filter:', newQuery.toMongo( self.document )
-		return QuerySet( self.document, self.collection, query=newQuery, orderBy=self.orderBy, onlyFields=self.onlyFields, timeout=self.timeout, readPref=self.readPref )
+		return QuerySet( self.document, self.collection, query=newQuery, orderBy=self.orderBy, fields=self._fields, timeout=self.timeout, readPref=self.readPref )
 
 	def no_timeout( self ):
 		kwargs = {
 			'query': self.query,
 			'orderBy': self.orderBy,
-			'onlyFields': self.onlyFields,
+			'fields': self._fields,
 			'timeout': False,
 			'readPref': self.readPref
 		}
@@ -72,7 +74,7 @@ class QuerySet(object):
 		kwargs = {
 			'query': self.query,
 			'orderBy': self.orderBy,
-			'onlyFields': self.onlyFields,
+			'fields': self._fields,
 			'timeout': self.timeout,
 			'readPref': readPref
 		}
@@ -99,7 +101,7 @@ class QuerySet(object):
 		for action, value in actions.iteritems( ):
 			assert '__' in action, 'Action "%s" not legal for update' % (action,)
 			modifier, fieldName = action.split( '__', 1 )
-			assert modifier in ['set', 'unset', 'inc', 'dec', 'push', 'pushAll', 'pull', 'pullAll'], 'Unknown modifier "%s"' % modifier
+			assert modifier in ['set', 'unset', 'setOnInsert', 'inc', 'dec', 'push', 'pushAll', 'pull', 'pullAll'], 'Unknown modifier "%s"' % modifier
 			
 			if '$'+modifier not in updates:
 				updates['$'+modifier] = {}
@@ -176,17 +178,26 @@ class QuerySet(object):
 	def order_by( self, *fields ):
 		newOrderBy = self.orderBy[:]
 		newOrderBy.extend( fields )
-		return QuerySet( self.document, self.collection, query=self.query, orderBy=newOrderBy, onlyFields=self.onlyFields, timeout=self.timeout, readPref=self.readPref )
+		return QuerySet( self.document, self.collection, query=self.query, orderBy=newOrderBy, fields=self._fields, timeout=self.timeout, readPref=self.readPref )
 	
 	def only( self, *fields ):
-		onlyFields = set(fields)
-		return QuerySet( self.document, self.collection, query=self.query, orderBy=self.orderBy, onlyFields=onlyFields, timeout=self.timeout, readPref=self.readPref )
+		fields = dict(self._fields or {}, **dict.fromkeys( fields, True ))
+		return QuerySet( self.document, self.collection, query=self.query, orderBy=self.orderBy, fields=fields, timeout=self.timeout, readPref=self.readPref )
 	
 	def ignore( self, *fields ):
-		current = set(self.document._fields.keys())
-		if self.onlyFields is not None:
-			current = set(self.onlyFields)
-		return self.only( *list(current - set(fields)) )
+		fields = dict(self._fields or {}, **dict.fromkeys( fields, False ))
+		return QuerySet( self.document, self.collection, query=self.query, orderBy=self.orderBy, fields=fields, timeout=self.timeout, readPref=self.readPref )
+
+	def fields( self, **projections ):
+		newFields = dict(self._fields or {})
+		for field, value in projections.iteritems( ):
+			if '__' in field:
+				fieldName, sep, projection = field.rpartition( '__' )
+				if projection in PROJECTIONS:
+					field = fieldName
+					value = {'$%s' % projection: value}
+			newFields[field] = value
+		return QuerySet( self.document, self.collection, query=self.query, orderBy=self.orderBy, fields=newFields, timeout=self.timeout, readPref=self.readPref )
 	
 	def _do_find( self, **kwargs ):
 		if 'sort' not in kwargs:
@@ -195,8 +206,8 @@ class QuerySet(object):
 			if len(sorting) > 0:
 				kwargs['sort'] = sorting
 		
-		if self.onlyFields is not None:
-			kwargs['fields'] = self.onlyFields
+		if self._fields is not None:
+			kwargs['fields'] = self._fields
 
 		if 'timeout' not in kwargs:
 			kwargs['timeout'] = self.timeout
