@@ -6,6 +6,8 @@ from mongorm.DocumentRegistry import DocumentRegistry
 
 from mongorm.blackMagic import serialiseTypesForDocumentType
 
+PROJECTIONS = frozenset(['slice'])
+
 class QuerySet(object):
 	def __init__( self, document, collection, query=None, orderBy=None, fields=None, timeout=True, readPref=None ):
 		self.document = document
@@ -185,6 +187,17 @@ class QuerySet(object):
 	def ignore( self, *fields ):
 		fields = dict(self._fields or {}, **dict.fromkeys( fields, False ))
 		return QuerySet( self.document, self.collection, query=self.query, orderBy=self.orderBy, fields=fields, timeout=self.timeout, readPref=self.readPref )
+
+	def fields( self, **projections ):
+		newFields = dict(self._fields or {})
+		for field, value in projections.iteritems( ):
+			if '__' in field:
+				fieldName, sep, projection = field.rpartition( '__' )
+				if projection in PROJECTIONS:
+					field = fieldName
+					value = {'$%s' % projection: value}
+			newFields[field] = value
+		return QuerySet( self.document, self.collection, query=self.query, orderBy=self.orderBy, fields=newFields, timeout=self.timeout, readPref=self.readPref )
 	
 	def _do_find( self, **kwargs ):
 		if 'sort' not in kwargs:

@@ -390,3 +390,20 @@ def test_secondary_read_pref( ):
 
 	assert Test.objects.read_preference( 'secondary' ).count( ) >= 3
 	assert Test.objects.filter( name="John" ).read_preference( ReadPreference.SECONDARY )[0].name == "John"
+
+def test_slice_projection( ):
+	"""Tests slice projection works"""
+	connect( 'test_mongorm' )
+
+	class TestArray(Document):
+		names = ListField( StringField( ) )
+
+	# Add some objects to the collection in case
+	chaps = TestArray( names=["John", "Eric", "Graham"] )
+	chaps.save( )
+
+	assert TestArray.objects.filter( pk=chaps.id ).fields( names__slice=1 )[0].names == ["John"]
+	assert TestArray.objects.fields( names__slice=1 ).get( pk=chaps.id ).names == ["John"]
+	assert TestArray.objects.fields( names__slice=-1 ).get( pk=chaps.id ).names == ["Graham"]
+	assert TestArray.objects.fields( names__slice=[1, 1] ).get( pk=chaps.id ).names == ["Eric"]
+	assert TestArray.objects.fields( names__slice=4 ).get( pk=chaps.id ).names == ["John", "Eric", "Graham"]
