@@ -152,3 +152,39 @@ def test_push_pull_operators( ):
 
 	assert TestPushPull.objects.get( pk=a.id ).values == []
 	assert TestPushPull.objects.get( pk=b.id ).values == []
+
+def test_setOnInsert( ):
+	"""Tests to make sure $setOnInsert works"""
+
+	class TestC(Document):
+		name = StringField( )
+		version = IntField( )
+
+	# Clear objects to reset counts
+	TestC.objects.all( ).delete( )
+
+	assert TestC.objects._prepareActions(
+		setOnInsert__name='spam',
+		inc__version=1
+	) == {'$setOnInsert': {'name': 'spam'}, '$inc': {'version': 1}}
+
+	assert TestC.objects.filter( name='spam' ).count( ) == 0
+	assert TestC.objects.filter( name='spam' ).update(
+		safeUpdate=True,
+		upsert=True,
+		modifyAndReturn=True,
+		setOnInsert__name='spam',
+		inc__version=1
+	) is None
+	assert TestC.objects.filter( name='spam' ).count( ) == 1
+
+	c = TestC.objects.filter( name='spam' ).update(
+		safeUpdate=True,
+		upsert=True,
+		modifyAndReturn=True,
+		returnAfterUpdate=True,
+		setOnInsert__name='eggs',
+		inc__version=1
+	)
+	assert c.name == 'spam'
+	assert c.version == 2
