@@ -407,3 +407,103 @@ def test_slice_projection( ):
 	assert TestArray.objects.fields( names__slice=-1 ).get( pk=chaps.id ).names == ["Graham"]
 	assert TestArray.objects.fields( names__slice=[1, 1] ).get( pk=chaps.id ).names == ["Eric"]
 	assert TestArray.objects.fields( names__slice=4 ).get( pk=chaps.id ).names == ["John", "Eric", "Graham"]
+
+def test_nin_operator( ):
+	"""Tests nin (not in) operator works with lists"""
+	connect( 'test_mongorm' )
+
+	class Test(Document):
+		name = StringField( )
+
+	assert Q( name__nin=[] ).toMongo( Test ) \
+		== {'name': {'$nin': []}}
+
+	assert Q( name__nin=['eggs', 'spam'] ).toMongo( Test ) \
+		== {'name': {'$nin': ['eggs', 'spam']}}
+
+	# Clear objects so that counts will be correct
+	Test.objects.all( ).delete( )
+
+	Test( name='spam' ).save( )
+	Test( name='eggs' ).save( )
+
+	assert Test.objects.filter( name__nin=[] ).count( ) == 2
+	assert Test.objects.filter( name__nin=['spam'] ).count( ) == 1
+	assert Test.objects.filter( name__nin=['eggs'] ).count( ) == 1
+	assert Test.objects.filter( name__nin=['spam', 'eggs'] ).count( ) == 0
+
+def test_nin_iter_operator( ):
+	"""Tests nin (not in) operator works with iterators"""
+	connect( 'test_mongorm' )
+
+	class Test(Document):
+		name = StringField( )
+
+	assert Q( name__nin={} ).toMongo( Test ) \
+		== {'name': {'$nin': []}}
+
+	assert Q( name__nin=set(['eggs', 'spam']) ).toMongo( Test ) \
+		== {'name': {'$nin': ['eggs', 'spam']}}
+
+	# Clear objects so that counts will be correct
+	Test.objects.all( ).delete( )
+
+	Test( name='spam' ).save( )
+	Test( name='eggs' ).save( )
+
+	def test_gen( ):
+		for item in ('eggs', 'spam'):
+			yield item
+
+	assert Test.objects.filter( name__nin=() ).count( ) == 2
+	assert Test.objects.filter( name__nin={'spam': True} ).count( ) == 1
+	assert Test.objects.filter( name__nin=frozenset(['eggs']) ).count( ) == 1
+	assert Test.objects.filter( name__nin=test_gen() ).count( ) == 0
+
+def test_nin_operator_with_ref( ):
+	"""Tests nin (not in) operator works with references"""
+	connect( 'test_mongorm' )
+
+	class TestUser(Document):
+		name = StringField( )
+
+	class TestOrder(Document):
+		user = ReferenceField( TestUser )
+		breakfast = StringField( )
+
+	# Clear objects so that counts will be correct
+	TestUser.objects.all( ).delete( )
+	TestOrder.objects.all( ).delete( )
+
+	man = TestUser( name="Eric Idle" )
+	wife = TestUser( name="Graham Chapman" )
+	man.save( )
+	wife.save( )
+
+	assert TestUser.objects.filter( name__nin=[] ).count( ) == 2
+	assert TestUser.objects.filter( name__nin=["Eric Idle", "Graham Chapman"] ).count( ) == 0
+
+	TestOrder( user=man, breakfast="spam spam spam beans spam" ).save( )
+	TestOrder( user=wife, breakfast="bacon and eggs" ).save( )
+
+	assert TestOrder.objects.filter( user__ne=man ).count( ) == 1
+	assert TestOrder.objects.filter( user__ne=wife ).count( ) == 1
+	assert TestOrder.objects.filter( user__nin=[man, wife] ).count( ) == 0
+
+	TestOrder( user=man, breakfast="spam spam spam spam spam" ).save( )
+
+	assert TestOrder.objects.filter( user__nin=[man, wife] ).count( ) == 0
+	assert TestOrder.objects.filter( breakfast__nin=["spam spam spam", "bacon and eggs"] ).count( ) == 2
+	assert TestOrder.objects.filter( breakfast__nin=["spam spam spam spam spam", "bacon and eggs"] ).count( ) == 1
+	assert TestOrder.objects.filter( breakfast__nin=[
+		"spam spam spam beans spam",
+		"spam spam spam spam spam",
+		"bacon and eggs"
+	] ).count( ) == 0
+	assert TestOrder.objects.filter( user__nin=[wife], breakfast__nin=["spam spam spam spam spam"] ).count( ) == 1
+	assert TestOrder.objects.filter( user__nin=[man], breakfast__nin=["spam spam spam spam spam"] ).count( ) == 1
+	assert TestOrder.objects.filter( user__nin=[man, wife], breakfast__nin=[
+		"spam spam spam spam spam",
+		"spam spam spam beans spam",
+		"bacon and eggs"
+	] ).count( ) == 0
