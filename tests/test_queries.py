@@ -509,3 +509,24 @@ def test_nin_operator_with_ref( ):
 		"spam spam spam beans spam",
 		"bacon and eggs"
 	] ).count( ) == 0
+
+def test_dict_queries( ):
+	"""Tests dicts as a whole can be queried."""
+	connect( 'test_mongorm' )
+
+	class TestDict(Document):
+		data = DictField( )
+
+	assert Q( data={} ).toMongo( TestDict ) == {'data': {}}
+	assert Q( data__gt={} ).toMongo( TestDict ) == {'data': {'$gt': {}}}
+
+	# Clear objects so that counts will be correct
+	TestDict.objects.all( ).delete( )
+
+	TestDict( data={} ).save( )
+	TestDict( data={"has": "something"} ).save( )
+
+	assert TestDict.objects.all( ).count( ) == 2
+
+	assert TestDict.objects.filter( data={} ).count( ) == 1
+	assert TestDict.objects.filter( data__gt={} ).count( ) == 1

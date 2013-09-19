@@ -112,7 +112,10 @@ class Q(object):
 			if isinstance(searchValue, dict):
 				if not forUpdate:
 					for name,value in searchValue.iteritems( ):
-						key = targetSearchKey + '.' + name
+						if name:
+							key = targetSearchKey + '.' + name
+						else:
+							key = targetSearchKey
 						newSearch[key] = valueMapper(value)
 				else:
 					newSearch[targetSearchKey] = valueMapper(searchValue)
