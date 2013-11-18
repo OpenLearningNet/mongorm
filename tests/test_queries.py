@@ -2,6 +2,7 @@
 
 from mongorm import *
 from pymongo import ReadPreference
+from pytest import raises
 
 def teardown_module(module):
 	DocumentRegistry.clear( )
@@ -530,3 +531,44 @@ def test_dict_queries( ):
 
 	assert TestDict.objects.filter( data={} ).count( ) == 1
 	assert TestDict.objects.filter( data__gt={} ).count( ) == 1
+
+def test_subtype_queries( ):
+	"""Tests querying objects based on their type."""
+	connect( 'test_mongorm' )
+
+	class TestDocument(Document):
+		data = StringField( )
+
+	class TestSubDocumentA(TestDocument):
+		pass
+
+	class TestSubDocumentB(TestDocument):
+		pass
+
+	class TestSubDocumentC(TestDocument):
+		pass
+
+	class TestOtherDocument(Document):
+		data = StringField( )
+
+	# Clear objects so that counts will be correct
+	TestDocument.objects.all( ).delete( )
+
+	TestSubDocumentA( data='spam' ).save( )
+	TestSubDocumentB( data='spam' ).save( )
+	TestSubDocumentC( data='spam' ).save( )
+
+	assert TestDocument.objects.all( ).count( ) == 3
+	assert TestSubDocumentA.objects.all( ).count( ) == 1
+	assert TestSubDocumentB.objects.all( ).count( ) == 1
+	assert TestSubDocumentC.objects.all( ).count( ) == 1
+
+	assert TestDocument.objects.subtypes( TestSubDocumentA ).all( ).count( ) == 1
+	assert TestDocument.objects.subtypes( TestSubDocumentB ).all( ).count( ) == 1
+	assert TestDocument.objects.subtypes( TestSubDocumentC ).all( ).count( ) == 1
+
+	assert TestDocument.objects.subtypes( TestSubDocumentA, TestSubDocumentB ).all( ).count( ) == 2
+	assert TestDocument.objects.subtypes( TestSubDocumentA, TestSubDocumentB, TestSubDocumentC ).all( ).count( ) == 3
+
+	with raises( TypeError ):
+		TestOtherDocument.objects.subtypes( TestSubDocumentA ).count( )
