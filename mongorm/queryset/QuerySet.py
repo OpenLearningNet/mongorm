@@ -9,7 +9,7 @@ from mongorm.blackMagic import serialiseTypesForDocumentType
 PROJECTIONS = frozenset(['slice'])
 
 class QuerySet(object):
-	def __init__( self, document, collection, query=None, orderBy=None, fields=None, timeout=True, readPref=None ):
+	def __init__( self, document, collection, query=None, orderBy=None, fields=None, timeout=True, readPref=None, types=None ):
 		self.document = document
 		self.documentTypes = serialiseTypesForDocumentType( document )
 		self.collection = collection
@@ -17,6 +17,7 @@ class QuerySet(object):
 		self._fields = fields
 		self.timeout = timeout
 		self.readPref = readPref
+		self.types = []
 		if orderBy is not None:
 			self.orderBy = orderBy[:]
 		self._savedCount = None
@@ -25,6 +26,11 @@ class QuerySet(object):
 			self.query = Q( )
 		else:
 			self.query = query
+		if types:
+			for subclass in types:
+				if not issubclass(subclass, self.document):
+					raise TypeError, "'%s' is not a subclass of '%s'" % (subclass, self.document)
+				self.types.append( subclass )
 	
 	def _getNewInstance( self, data ):
 		documentName = data.get( '_types', [self.document.__name__] )[0]
@@ -56,9 +62,15 @@ class QuerySet(object):
 	def filter( self, query=None, **search ):
 		if query is None:
 			query = Q( **search )
-		newQuery = self.query & query
-		#print 'filter:', newQuery.toMongo( self.document )
-		return QuerySet( self.document, self.collection, query=newQuery, orderBy=self.orderBy, fields=self._fields, timeout=self.timeout, readPref=self.readPref )
+		kwargs = {
+			'query': self.query & query,
+			'orderBy': self.orderBy,
+			'fields': self._fields,
+			'timeout': self.timeout,
+			'readPref': self.readPref,
+			'types': self.types,
+		}
+		return QuerySet( self.document, self.collection, **kwargs )
 
 	def no_timeout( self ):
 		kwargs = {
@@ -66,7 +78,8 @@ class QuerySet(object):
 			'orderBy': self.orderBy,
 			'fields': self._fields,
 			'timeout': False,
-			'readPref': self.readPref
+			'readPref': self.readPref,
+			'types': self.types,
 		}
 		return QuerySet( self.document, self.collection, **kwargs )
 
@@ -76,7 +89,19 @@ class QuerySet(object):
 			'orderBy': self.orderBy,
 			'fields': self._fields,
 			'timeout': self.timeout,
-			'readPref': readPref
+			'readPref': readPref,
+			'types': self.types,
+		}
+		return QuerySet( self.document, self.collection, **kwargs )
+
+	def subtypes( self, *types ):
+		kwargs = {
+			'query': self.query,
+			'orderBy': self.orderBy,
+			'fields': self._fields,
+			'timeout': self.timeout,
+			'readPref': self.readPref,
+			'types': types,
 		}
 		return QuerySet( self.document, self.collection, **kwargs )
 	
@@ -221,7 +246,9 @@ class QuerySet(object):
 	def _get_query( self, forUpsert=False ):
 		search = self.query.toMongo( self.document )
 		types = self.documentTypes
-		if len(types) > 1: # only filter when looking at a subclass
+		if self.types:
+			search['_types'] = {'$in': [subtype.__name__ for subtype in self.types]}
+		elif len(types) > 1: # only filter when looking at a subclass
 			if forUpsert:
 				search['_types'] = {'$all':[self.document.__name__]} # filter by the type that was used
 			else:
