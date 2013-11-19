@@ -232,6 +232,10 @@ class QuerySet(object):
 			kwargs['read_preference'] = self.readPref
 		
 		search = self._get_query( )
+
+		if '_types' in search and 'fields' in kwargs and not kwargs['fields'].get( '_types' ) and all(kwargs['fields'].itervalues( )):
+			kwargs['fields']['_types'] = True
+
 		return self.collection.find( search, **kwargs )
 	
 	def _get_query( self, forUpsert=False ):

@@ -571,6 +571,14 @@ def test_subtype_queries( ):
 	assert type(TestDocument.objects.subtypes( TestSubDocumentB )[0]) == TestSubDocumentB
 	assert type(TestDocument.objects.subtypes( TestSubDocumentC )[0]) == TestSubDocumentC
 
+	assert type(TestDocument.objects.subtypes( TestSubDocumentA ).only( '_id' )[0]) == TestSubDocumentA
+	assert type(TestDocument.objects.subtypes( TestSubDocumentB ).only( '_id' )[0]) == TestSubDocumentB
+	assert type(TestDocument.objects.subtypes( TestSubDocumentC ).only( '_id' )[0]) == TestSubDocumentC
+
+	assert type(TestDocument.objects.subtypes( TestSubDocumentA ).ignore( 'data' )[0]) == TestSubDocumentA
+	assert type(TestDocument.objects.subtypes( TestSubDocumentB ).ignore( 'data' )[0]) == TestSubDocumentB
+	assert type(TestDocument.objects.subtypes( TestSubDocumentC ).ignore( 'data' )[0]) == TestSubDocumentC
+
 	assert TestDocument.objects.subtypes( TestSubDocumentA, TestSubDocumentB ).all( ).count( ) == 2
 	assert TestDocument.objects.subtypes( TestSubDocumentA, TestSubDocumentB, TestSubDocumentC ).all( ).count( ) == 3
 
