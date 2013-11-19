@@ -41,11 +41,11 @@ class QuerySet(object):
 	def _get_kwargs( self ):
 		return {
 			'query': self.query,
-			'orderBy': self.orderBy[:],
-			'fields': dict(self._fields or {}),
+			'orderBy': self.orderBy,
+			'fields': self._fields,
 			'timeout': self.timeout,
 			'readPref': self.readPref,
-			'types': self.types[:],
+			'types': self.types,
 		}
 	
 	def get( self, query=None, **search ):
@@ -188,21 +188,24 @@ class QuerySet(object):
 	
 	def order_by( self, *fields ):
 		kwargs = self._get_kwargs( )
-		kwargs['orderBy'] += fields
+		newOrderBy = self.orderBy[:]
+		newOrderBy.extend( fields )
+		kwargs['orderBy'] = newOrderBy
 		return QuerySet( self.document, self.collection, **kwargs )
 	
 	def only( self, *fields ):
 		kwargs = self._get_kwargs( )
-		kwargs['fields'].update( dict.fromkeys( fields, True ) )
+		kwargs['fields'] = dict(self._fields or {}, **dict.fromkeys( fields, True ))
 		return QuerySet( self.document, self.collection, **kwargs )
 	
 	def ignore( self, *fields ):
 		kwargs = self._get_kwargs( )
-		kwargs['fields'].update( dict.fromkeys( fields, False ) )
+		kwargs['fields'] = dict(self._fields or {}, **dict.fromkeys( fields, False ))
 		return QuerySet( self.document, self.collection, **kwargs )
 
 	def fields( self, **projections ):
 		kwargs = self._get_kwargs( )
+		kwargs['fields'] = dict(self._fields or {})
 		for field, value in projections.iteritems( ):
 			if '__' in field:
 				fieldName, sep, projection = field.rpartition( '__' )
