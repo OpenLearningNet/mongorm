@@ -37,6 +37,16 @@ class QuerySet(object):
 		documentClass = DocumentRegistry.getDocument( documentName )
 		assert issubclass( documentClass, self.document )
 		return documentClass( )._fromMongo( data )
+
+	def _get_kwargs( self ):
+		return {
+			'query': self.query,
+			'orderBy': self.orderBy[:],
+			'fields': dict(self._fields or {}),
+			'timeout': self.timeout,
+			'readPref': self.readPref,
+			'types': self.types[:],
+		}
 	
 	def get( self, query=None, **search ):
 		if query is None:
@@ -62,47 +72,23 @@ class QuerySet(object):
 	def filter( self, query=None, **search ):
 		if query is None:
 			query = Q( **search )
-		kwargs = {
-			'query': self.query & query,
-			'orderBy': self.orderBy,
-			'fields': self._fields,
-			'timeout': self.timeout,
-			'readPref': self.readPref,
-			'types': self.types,
-		}
+		kwargs = self._get_kwargs( )
+		kwargs['query'] &= query
 		return QuerySet( self.document, self.collection, **kwargs )
 
 	def no_timeout( self ):
-		kwargs = {
-			'query': self.query,
-			'orderBy': self.orderBy,
-			'fields': self._fields,
-			'timeout': False,
-			'readPref': self.readPref,
-			'types': self.types,
-		}
+		kwargs = self._get_kwargs( )
+		kwargs['timeout'] = False
 		return QuerySet( self.document, self.collection, **kwargs )
 
 	def read_preference( self, readPref ):
-		kwargs = {
-			'query': self.query,
-			'orderBy': self.orderBy,
-			'fields': self._fields,
-			'timeout': self.timeout,
-			'readPref': readPref,
-			'types': self.types,
-		}
+		kwargs = self._get_kwargs( )
+		kwargs['readPref'] = readPref
 		return QuerySet( self.document, self.collection, **kwargs )
 
 	def subtypes( self, *types ):
-		kwargs = {
-			'query': self.query,
-			'orderBy': self.orderBy,
-			'fields': self._fields,
-			'timeout': self.timeout,
-			'readPref': self.readPref,
-			'types': types,
-		}
+		kwargs = self._get_kwargs( )
+		kwargs['types'] = types
 		return QuerySet( self.document, self.collection, **kwargs )
 	
 	def count( self ):
@@ -201,28 +187,30 @@ class QuerySet(object):
 				return self._getNewInstance( result )
 	
 	def order_by( self, *fields ):
-		newOrderBy = self.orderBy[:]
-		newOrderBy.extend( fields )
-		return QuerySet( self.document, self.collection, query=self.query, orderBy=newOrderBy, fields=self._fields, timeout=self.timeout, readPref=self.readPref )
+		kwargs = self._get_kwargs( )
+		kwargs['orderBy'] += fields
+		return QuerySet( self.document, self.collection, **kwargs )
 	
 	def only( self, *fields ):
-		fields = dict(self._fields or {}, **dict.fromkeys( fields, True ))
-		return QuerySet( self.document, self.collection, query=self.query, orderBy=self.orderBy, fields=fields, timeout=self.timeout, readPref=self.readPref )
+		kwargs = self._get_kwargs( )
+		kwargs['fields'].update( dict.fromkeys( fields, True ) )
+		return QuerySet( self.document, self.collection, **kwargs )
 	
 	def ignore( self, *fields ):
-		fields = dict(self._fields or {}, **dict.fromkeys( fields, False ))
-		return QuerySet( self.document, self.collection, query=self.query, orderBy=self.orderBy, fields=fields, timeout=self.timeout, readPref=self.readPref )
+		kwargs = self._get_kwargs( )
+		kwargs['fields'].update( dict.fromkeys( fields, False ) )
+		return QuerySet( self.document, self.collection, **kwargs )
 
 	def fields( self, **projections ):
-		newFields = dict(self._fields or {})
+		kwargs = self._get_kwargs( )
 		for field, value in projections.iteritems( ):
 			if '__' in field:
 				fieldName, sep, projection = field.rpartition( '__' )
 				if projection in PROJECTIONS:
 					field = fieldName
 					value = {'$%s' % projection: value}
-			newFields[field] = value
-		return QuerySet( self.document, self.collection, query=self.query, orderBy=self.orderBy, fields=newFields, timeout=self.timeout, readPref=self.readPref )
+			kwargs['fields'][field] = value
+		return QuerySet( self.document, self.collection, **kwargs )
 	
 	def _do_find( self, **kwargs ):
 		if 'sort' not in kwargs:
