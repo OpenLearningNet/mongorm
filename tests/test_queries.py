@@ -572,3 +572,5 @@ def test_subtype_queries( ):
 
 	with raises( TypeError ):
 		TestOtherDocument.objects.subtypes( TestSubDocumentA ).count( )
+
+	assert TestDocument.objects.subtypes( TestSubDocumentA ).all( ).order_by( 'data' ).count( ) == 1
