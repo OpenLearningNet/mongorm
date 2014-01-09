@@ -586,3 +586,18 @@ def test_subtype_queries( ):
 		TestOtherDocument.objects.subtypes( TestSubDocumentA ).count( )
 
 	assert TestDocument.objects.subtypes( TestSubDocumentA ).all( ).order_by( 'data' ).count( ) == 1
+
+def test_datetime_queries( ):
+	"""Tests queries with datetime fields."""
+
+	from datetime import datetime
+
+	class TestDateTime(Document):
+		timestamp = DateTimeField( )
+
+	now = datetime.now( ).replace( microsecond=0 )
+
+	assert Q( timestamp=now ).toMongo( TestDateTime) == {'timestamp': now}
+	assert Q( timestamp__gte=now ).toMongo( TestDateTime) == {'timestamp': {'$gte': now}}
+	assert Q( timestamp__lt=now ).toMongo( TestDateTime) == {'timestamp': {'$lt': now}}
+	assert Q( timestamp__exists=True ).toMongo( TestDateTime) == {'timestamp': {'$exists': True}}

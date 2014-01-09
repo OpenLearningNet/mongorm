@@ -25,10 +25,7 @@ class DateTimeField(BaseField):
 				# oh well we tried
 				pass
 
-		if pythonValue is not None:
-			if not isinstance(pythonValue, datetime):
-				raise ValueError, "Value must be a datetime object not %r" % (pythonValue,)
-
+		if isinstance(pythonValue, datetime):
 			if PYTZ and pythonValue.tzinfo is not None:
 				pythonValue = pythonValue.astimezone( utc )
 				pythonValue = pythonValue.replace( tzinfo=None )
