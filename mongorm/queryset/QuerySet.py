@@ -68,6 +68,10 @@ class QuerySet(object):
 	
 	def all( self ):
 		return self
+
+	def close( self ):
+		if self._savedItems is not None:
+			self._savedItems.close()
 	
 	def filter( self, query=None, **search ):
 		if query is None:
