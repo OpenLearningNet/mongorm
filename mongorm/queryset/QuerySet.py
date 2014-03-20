@@ -22,6 +22,7 @@ class QuerySet(object):
 			self.orderBy = orderBy[:]
 		self._savedCount = None
 		self._savedItems = None
+		self._currentItems = None
 		if query is None:
 			self.query = Q( )
 		else:
@@ -70,8 +71,13 @@ class QuerySet(object):
 		return self
 
 	def close( self ):
-		if self._savedItems:
+		if self._savedItems is not None:
 			self._savedItems.close()
+			self._savedItems = None
+
+		if self._currentItems is not None:
+			self._currentItems.close()
+			self._currentItems = None
 	
 	def filter( self, query=None, **search ):
 		if query is None:
@@ -258,7 +264,9 @@ class QuerySet(object):
 		#print 'iter:', self.query.toMongo( self.document ), self.collection
 		if self._savedItems is None:
 			self._savedItems = self._do_find( )
-		return (self._getNewInstance( item ) for item in self._savedItems.clone( ))
+
+		self._currentItems = self._savedItems.clone( )
+		return (self._getNewInstance( item ) for item in self._currentItems)
 	
 	def __getitem__( self, index ):
 		if isinstance(index, int):
@@ -275,7 +283,11 @@ class QuerySet(object):
 		
 		#print self.query.toMongo( self.document )
 		#items = self.collection.find( self.query.toMongo( self.document ), skip=skip, limit=limit )
-		items = self._do_find( skip=skip, limit=limit )
+		if self._savedItems is not None and skip == 0 and (getOne or limit == 0):
+			items = self._savedItems
+		else:
+			items = self._do_find( skip=skip, limit=limit )
+			self._currentItems = items
 		
 		if getOne:
 			try:
@@ -292,11 +304,16 @@ class QuerySet(object):
 			return _yieldItems( )
 	
 	def first( self ):
+		firstItem = None
 		try:
-			return self[0]
+			firstItem = self[0]
 		except IndexError:
-			return None
-	
+			firstItem = None
+		self.close()
+		
+		return firstItem
+
+
 	def __call__( self, **search ):
 		return self.filter( **search )
 	
