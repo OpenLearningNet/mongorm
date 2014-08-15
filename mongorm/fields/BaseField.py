@@ -19,6 +19,8 @@ class BaseField(object):
 		return self.fromPython( pythonValue )
 	
 	def getDefault( self ):
+		if callable(self.default):
+			return self.default()
 		return self.default
 	
 	def setOwnerDocument( self, ownerDocument ):
