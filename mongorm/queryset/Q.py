@@ -17,6 +17,10 @@ class Q(object):
 				# mongodb logic operator - value is a list of Qs
 				newSearch[name] = [ value.toMongo( document ) for value in value ]
 				continue
+
+			if name.startswith('$') and isinstance(value, basestring):
+				newSearch[name] = value
+				continue
 			
 			fieldName = name
 			
