@@ -77,11 +77,13 @@ class BaseDocument(object):
 				
 				self._is_lazy = False
 		
-		default = None
 		field = self._fields.get( name, None )
-		if field is not None:
-			default = field.getDefault( )
+
 		if not name in self._values:
+			default = None
+			if field is not None:
+				default = field.getDefault( )
+
 			self._values[name] = default
 		
 		value = self._values.get( name )
@@ -91,7 +93,8 @@ class BaseDocument(object):
 	def _resyncFromPython( self ):
 		# before we go any further, re-sync from python values where needed
 		for (name,field) in self._fields.iteritems( ):
-			if field._resyncAtSave:
+			requiresDefaultCall = (name not in self._values and callable(field.default))
+			if field._resyncAtSave or requiresDefaultCall:
 				dbField = field.dbField
 				pythonValue = getattr(self, name)
 				self._data[dbField] = field.fromPython( pythonValue )
