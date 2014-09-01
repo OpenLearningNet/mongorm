@@ -7,7 +7,7 @@ from mongorm.fields.ObjectIdField import ObjectIdField
 
 from mongorm.errors import DoesNotExist, MultipleObjectsReturned
 
-from mongorm.connection import getDatabase
+from mongorm import connection
 
 import sys
 
@@ -58,11 +58,18 @@ class DocumentMetaclass(type):
 					field.dbField = attrName
 				fields[attrName] = field
 				del attrs[attrName]
-		
+
+		def indexConverter( fieldName ):
+			if fieldName in fields:
+				return fields[fieldName].optimalIndex( )
+			return fieldName
+
 		for field,value in fields.iteritems( ):
 			if value.primaryKey:
 				assert primaryKey is None, "Can only have one primary key per document"
 				primaryKey = field
+			if value.unique:
+				connection.stagedIndexes.append( (collection, indexConverter( field ), { 'unique': True }) )
 		
 		# add a primary key if none exists and one is required
 		if needsPrimaryKey and primaryKey is None:
@@ -77,19 +84,13 @@ class DocumentMetaclass(type):
 			if 'indexes' in meta:
 				indexes = meta['indexes']
 				
-				_database = getDatabase( )
-				_collection = _database[collection]
-				
 				for index in indexes:
 					if not isinstance(index, (list,tuple)):
 						index = [index]
-					def indexConverter( fieldName ):
-						if fieldName in fields:
-							return fields[fieldName].optimalIndex( )
-						return fieldName
+					
 					pyMongoIndexKeys = sortListToPyMongo( index, indexConverter )
-					_collection.ensure_index( pyMongoIndexKeys )
-		
+					connection.stagedIndexes.append( (collection, pyMongoIndexKeys, {}) )
+
 		# add a query set manager if none exists already
 		if 'objects' not in attrs:
 			attrs['objects'] = QuerySetManager( )
@@ -114,12 +115,15 @@ class DocumentMetaclass(type):
 		newClass._addException( 'MultipleObjectsReturned', bases,
 								defaultBase=MultipleObjectsReturned,
 								module=module )
-		
+
 		# register the document for name-based reference
 		DocumentRegistry.registerDocument( name, newClass )
+
+		if connection.database is not None:
+			connection.ensureIndexes()
 		
 		return newClass
-	
+
 	def _addException( self, name, bases, defaultBase, module ):
 		baseExceptions = tuple( getattr(base, name) \
 								for base in bases if hasattr(base, name)

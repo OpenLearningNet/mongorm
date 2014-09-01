@@ -5,6 +5,9 @@ database = None
 
 connectionSettings = None
 
+stagedIndexes = []
+registeredIndexes = []
+
 def connect( databaseName, **kwargs ):
 	global database, connection, connectionSettings
 	
@@ -36,6 +39,21 @@ def getConnection( ):
 	
 	return connection
 
+def ensureIndexes( ):
+	global stagedIndexes, registeredIndexes
+
+	error = None
+
+	# Ensure indexes on the documents
+	try:
+		for collection, key_or_list, kwargs in stagedIndexes:
+			database[collection].ensure_index(key_or_list, **kwargs)
+	except Exception as err:
+		raise error
+	else:
+		registeredIndexes += stagedIndexes
+		stagedIndexes = []		
+
 def getDatabase( ):
 	global database, connectionSettings
 	
@@ -47,5 +65,7 @@ def getDatabase( ):
 		if 'username' in connectionSettings and \
 			'password' in connectionSettings:
 			database.authenticate( connectionSettings['username'], connectionSettings['password'] )
+
+		ensureIndexes()
 	
 	return database
