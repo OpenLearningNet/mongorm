@@ -22,7 +22,7 @@ class Document(BaseDocument):
 	def __init__( self, **kwargs ):
 		super(Document, self).__init__( **kwargs )
 	
-	def save( self, forceInsert=False, safe=True ):
+	def save( self, forceInsert=False, **kwargs ):
 		database = getDatabase( )
 		collection = database[self._collection]
 		
@@ -32,9 +32,9 @@ class Document(BaseDocument):
 			del self._data['_id']
 		try:
 			if forceInsert:
-				newId = collection.insert( self._data, safe=safe )
+				newId = collection.insert( self._data, **kwargs )
 			else:
-				newId = collection.save( self._data, safe=safe )
+				newId = collection.save( self._data, **kwargs )
 		except pymongo.errors.OperationFailure, err:
 			message = 'Could not save document (%s)'
 			if u'duplicate key' in unicode(err):
