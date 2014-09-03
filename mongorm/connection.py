@@ -42,14 +42,12 @@ def getConnection( ):
 def ensureIndexes( ):
 	global stagedIndexes, registeredIndexes
 
-	error = None
-
 	# Ensure indexes on the documents
 	try:
 		for collection, key_or_list, kwargs in stagedIndexes:
 			database[collection].ensure_index(key_or_list, **kwargs)
 	except Exception as err:
-		raise error
+		raise err
 	else:
 		registeredIndexes += stagedIndexes
 		stagedIndexes = []		
