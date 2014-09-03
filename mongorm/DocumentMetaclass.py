@@ -69,7 +69,12 @@ class DocumentMetaclass(type):
 				assert primaryKey is None, "Can only have one primary key per document"
 				primaryKey = field
 			if value.unique:
-				connection.stagedIndexes.append( (collection, indexConverter( field ), { 'unique': True }) )
+				keyOpts = { 'unique': True }
+				
+				if value.dropDups:
+					keyOpts['dropDups'] = True
+				
+				connection.stagedIndexes.append( (collection, indexConverter( field ), keyOpts) )
 		
 		# add a primary key if none exists and one is required
 		if needsPrimaryKey and primaryKey is None:
