@@ -47,36 +47,34 @@ def ensureIndexes( ):
 	assert database is not None, "Must be connected to database before ensuring indexes"
 
 	# Ensure indexes on the documents
-	try:
-		for collection, key_or_list, kwargs in stagedIndexes:
-			indexInfo = collectionIndexInfo.setdefault(collection, database[collection].index_information())
 
-			if isinstance(key_or_list, basestring):
-				# if args on the index have changed, drop the index
-				key = key_or_list + '_1'
+	for collection, key_or_list, kwargs in stagedIndexes:
+		indexInfo = collectionIndexInfo.setdefault(collection, database[collection].index_information())
+
+		if isinstance(key_or_list, basestring):
+			# if args on the index have changed, drop the index
+			key = key_or_list + '_1'
+			keyIndexInfo = indexInfo.get(key)
+			if keyIndexInfo is None:
+				key = key_or_list + '_-1'
 				keyIndexInfo = indexInfo.get(key)
-				if keyIndexInfo is None:
-					key = key_or_list + '_-1'
-					keyIndexInfo = indexInfo.get(key)
-				
-				if keyIndexInfo is not None:
-					hasChanged = False
-					if kwargs.get('unique', False) or keyIndexInfo.get('unique', False):
-						if kwargs.get('unique', False) != keyIndexInfo.get('unique', False):
-							hasChanged = True
-						if kwargs.get('dropDups', False) != keyIndexInfo.get('dropDups', False):
-							hasChanged = True
 
-					if hasChanged:
-						database[collection].drop_index(key)
-						droppedIndexes.append(key)
+			if keyIndexInfo is not None:
+				hasChanged = False
+				if kwargs.get('unique', False) or keyIndexInfo.get('unique', False):
+					if kwargs.get('unique', False) != keyIndexInfo.get('unique', False):
+						hasChanged = True
+					if kwargs.get('dropDups', False) != keyIndexInfo.get('dropDups', False):
+						hasChanged = True
 
-			database[collection].ensure_index(key_or_list, **kwargs)
-	except Exception as err:
-		raise err
-	else:
-		registeredIndexes += stagedIndexes
-		stagedIndexes = []
+				if hasChanged:
+					database[collection].drop_index(key)
+					droppedIndexes.append(key)
+
+		database[collection].ensure_index(key_or_list, **kwargs)
+	
+	registeredIndexes += stagedIndexes
+	stagedIndexes = []
 
 def getDatabase( ):
 	global database, connectionSettings
