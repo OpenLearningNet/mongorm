@@ -50,13 +50,15 @@ def ensureIndexes( ):
 	try:
 		for collection, key_or_list, kwargs in stagedIndexes:
 			indexInfo = collectionIndexInfo.setdefault(collection, database[collection].index_information())
-			
+
 			if isinstance(key_or_list, basestring):
-				key = key_or_list
-
 				# if args on the index have changed, drop the index
-				keyIndexInfo = indexInfo.get(key + '_1', indexInfo.get(key + '_-1'))
-
+				key = key_or_list + '_1'
+				keyIndexInfo = indexInfo.get(key)
+				if keyIndexInfo is None:
+					key = key_or_list + '_-1'
+					keyIndexInfo = indexInfo.get(key)
+				
 				if keyIndexInfo is not None:
 					hasChanged = False
 					if kwargs.get('unique', False) or keyIndexInfo.get('unique', False):
