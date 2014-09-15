@@ -46,7 +46,7 @@ class BaseDocument(object):
 		return ( )
 
 	def __setattr__( self, name, value ):
-		assert (name[0] == '_' and hasattr(self, name)) or name in self._fields, \
+		assert name[0] == '_' or (name in self._fields), \
 			"Field '%s' does not exist in document '%s'" \
 			% (name, self.__class__.__name__)
 		
@@ -65,6 +65,10 @@ class BaseDocument(object):
 	def __getattr__( self, name ):
 		if name not in self._values and self._is_lazy and \
 			'_id' in self._data and self._data['_id'] is not None:
+
+			if name not in self._fields:
+				raise AttributeError
+
 			# field is being accessed and the object is currently in lazy mode
 			# may need to retrieve rest of document
 			field = self._fields[name]

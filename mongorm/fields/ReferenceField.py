@@ -34,7 +34,11 @@ class ReferenceField(BaseField):
 		if pythonValue is None:
 			return None
 		
-		if not isinstance(pythonValue, self.documentClass):
+		if isinstance(pythonValue, dbref.DBRef):
+			return {
+				'_ref': pythonValue
+			}
+		elif not isinstance(pythonValue, self.documentClass):
 			# try mapping to an objectid
 			try:
 				objectId = objectid.ObjectId( str( pythonValue ) )
@@ -69,6 +73,8 @@ class ReferenceField(BaseField):
 		if bsonValue is None:
 			return None
 		
+		documentClass = None
+
 		if isinstance(bsonValue, dbref.DBRef):
 			# old style (mongoengine)
 			dbRef = bsonValue
@@ -83,9 +89,12 @@ class ReferenceField(BaseField):
 			if '_cls' in bsonValue:
 				# mongoengine GenericReferenceField compatibility
 				documentName = bsonValue['_cls']
-			else:
+			elif '_types' in bsonValue: 
 				documentName = bsonValue['_types'][0]
-			documentClass = DocumentRegistry.getDocument( documentName )
+				documentClass = DocumentRegistry.getDocument( documentName )
+			else:
+				return dbRef
+			
 			initialData = {
 				'_id': dbRef.id,
 			}
