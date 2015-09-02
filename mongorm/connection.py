@@ -67,9 +67,10 @@ def ensureIndexes( ):
 					if kwargs.get('dropDups', False) != keyIndexInfo.get('dropDups', False):
 						hasChanged = True
 
-				if hasChanged:
-					database[collection].drop_index(key)
-					droppedIndexes.append(key)
+				# TODO: FIX ME
+				#if hasChanged:
+				#	database[collection].drop_index(key)
+				#	droppedIndexes.append(key)
 
 		database[collection].ensure_index(key_or_list, **kwargs)
 	
