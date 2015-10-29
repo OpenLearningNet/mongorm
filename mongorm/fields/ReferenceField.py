@@ -91,9 +91,10 @@ class ReferenceField(BaseField):
 				documentName = bsonValue['_cls']
 			elif '_types' in bsonValue: 
 				documentName = bsonValue['_types'][0]
-				documentClass = DocumentRegistry.getDocument( documentName )
 			else:
 				return dbRef
+
+			documentClass = DocumentRegistry.getDocument( documentName )
 			
 			initialData = {
 				'_id': dbRef.id,
