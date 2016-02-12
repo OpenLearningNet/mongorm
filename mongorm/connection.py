@@ -1,5 +1,5 @@
 from pymongo import MongoClient, MongoReplicaSetClient
-
+from pymongo.collection import Collection
 connection = None
 database = None
 
@@ -49,6 +49,9 @@ def ensureIndexes( ):
 	# Ensure indexes on the documents
 
 	for collection, key_or_list, kwargs in stagedIndexes:
+		if collection not in database.collection_names():
+			Collection(database, collection, create=True)
+
 		indexInfo = collectionIndexInfo.setdefault(collection, database[collection].index_information())
 
 		if isinstance(key_or_list, basestring):
