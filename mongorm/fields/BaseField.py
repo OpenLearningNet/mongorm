@@ -28,4 +28,7 @@ class BaseField(object):
 		self.ownerDocument = ownerDocument
 	
 	def optimalIndex( self ):
-		return self.dbField
+		if self.dbField:
+			return self.dbField
+		else:
+			return ""
