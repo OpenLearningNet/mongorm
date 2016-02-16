@@ -104,4 +104,4 @@ class ReferenceField(BaseField):
 		return documentClass( )._fromMongo( initialData )
 	
 	def optimalIndex( self ):
-		return super(ReferenceField, self).optimalIndex() + '._ref'
+		return self.dbField + '._ref'
