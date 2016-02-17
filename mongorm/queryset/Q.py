@@ -64,36 +64,20 @@ class Q(object):
 			field = document._fields[fieldName]
 			if not forUpdate:
 				if comparison in ARRAY_VALUE_COMPARISONS:
-					searchValues = [field.toQuery( item, dereferences=dereferences ) for item in value]
-					if searchValues and isinstance(searchValues[0], dict):
-						searchValue = {}
-						for dictValue in searchValues:
-							for key in dictValue:
-								# using setdefault instead of defaultdict in case python < 2.5
-								searchValue.setdefault(key, []).append( dictValue[key] )
-					else:
-						searchValue = searchValues
+					searchValue = [field.toQuery( item, dereferences=dereferences ) for item in value]
 				else:
 					searchValue = field.toQuery( value, dereferences=dereferences )
-				targetSearchKey = field.dbField
 			else:
 				if comparison in ARRAY_VALUE_COMPARISONS:
-					searchValues = [field.fromPython( item, dereferences=dereferences, modifier=modifier ) for item in value]
-					if searchValues and isinstance(searchValues[0], dict):
-						searchValue = {}
-						for dictValue in searchValues:
-							for key in dictValue:
-								# using setdefault instead of defaultdict in case python < 2.5
-								searchValue.setdefault(key, []).append( dictValue[key] )
-					else:
-						searchValue = searchValues
+					searchValue = [field.fromPython( item, dereferences=dereferences, modifier=modifier ) for item in value]
 				else:
 					searchValue = field.fromPython( value, dereferences=dereferences, modifier=modifier )
-				targetSearchKey = '.'.join( [field.dbField] + dereferences)
-			
+
+			targetSearchKey = '.'.join( [field.dbField] + dereferences)
+
 			valueMapper = lambda value: value
-			
-			
+
+
 			if comparison is not None:
 				if comparison in REGEX_COMPARISONS:
 					regex,options = REGEX_COMPARISONS[comparison]
@@ -113,24 +97,13 @@ class Q(object):
 					valueMapper = lambda value: { '$'+comparison: value }
 					#newSearch[targetSearchKey] = { '$'+comparison: searchValue }
 
-			if isinstance(searchValue, dict):
-				if not forUpdate:
-					for name,value in searchValue.iteritems( ):
-						if name:
-							key = targetSearchKey + '.' + name
-						else:
-							key = targetSearchKey
-						newSearch[key] = valueMapper(value)
-				else:
-					newSearch[targetSearchKey] = valueMapper(searchValue)
-			else:
-				newSearch[targetSearchKey] = valueMapper(searchValue)
-		
+			newSearch[targetSearchKey] = valueMapper(searchValue)
+
 		return newSearch
-	
+
 	def __or__( self, other ):
 		return self.do_merge( other, '$or' )
-	
+
 	def __and__( self, other ):
 		if len( set( self.query.keys() ).intersection( other.query.keys() ) ) > 0:
 			# if the 2 queries have overlapping keys, we need to use a $and to join them.

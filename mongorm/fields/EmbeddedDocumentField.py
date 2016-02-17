@@ -35,6 +35,4 @@ class EmbeddedDocumentField(BaseField):
 	def toQuery( self, pythonValue, dereferences=[] ):
 		# FIXME: this doesn't consider converting the value to/from python
 		# should check the types of the fields the whole way down the chain
-		return {
-			'.'.join( dereferences ): pythonValue
-		}
+		return pythonValue
