@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from mongorm.fields.BaseField import BaseField
 from mongorm.queryset.QuerySetManager import QuerySetManager
 from mongorm.DocumentRegistry import DocumentRegistry
@@ -124,7 +126,7 @@ class DocumentMetaclass(type):
 		# register the document for name-based reference
 		DocumentRegistry.registerDocument( name, newClass )
 
-		if connection.database is not None:
+		if connection.database is not None and settings.AUTO_ENSURE:
 			connection.ensureIndexes()
 		
 		return newClass

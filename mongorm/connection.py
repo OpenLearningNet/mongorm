@@ -1,3 +1,4 @@
+from django.conf import settings
 from pymongo import MongoClient, MongoReplicaSetClient
 from pymongo.collection import Collection
 connection = None
@@ -95,6 +96,7 @@ def getDatabase( ):
 			'password' in connectionSettings:
 			database.authenticate( connectionSettings['username'], connectionSettings['password'] )
 
-		ensureIndexes()
+		if settings.AUTO_ENSURE:
+			ensureIndexes()
 	
 	return database
