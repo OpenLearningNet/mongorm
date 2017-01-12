@@ -75,6 +75,9 @@ def ensureIndexes( ):
 				#	database[collection].drop_index(key)
 				#	droppedIndexes.append(key)
 
+		# Build the index in the background
+		kwargs['background'] = True
+
 		database[collection].ensure_index(key_or_list, **kwargs)
 	
 	registeredIndexes += stagedIndexes
