@@ -10,8 +10,10 @@ registeredIndexes = []
 droppedIndexes = []
 collectionIndexInfo = {}
 
-def connect( databaseName, **kwargs ):
-	global database, connection, connectionSettings
+def connect( databaseName, autoEnsure=False, **kwargs ):
+	global database, connection, connectionSettings, autoEnsureIndexes
+
+	autoEnsureIndexes = autoEnsure
 	
 	connectionSettings = {}
 	connectionSettings.update( kwargs )
@@ -43,6 +45,9 @@ def getConnection( ):
 
 def ensureIndexes( ):
 	global stagedIndexes, registeredIndexes, droppedIndexes, collectionIndexInfo
+
+	if not autoEnsureIndexes:
+		return
 
 	assert database is not None, "Must be connected to database before ensuring indexes"
 
