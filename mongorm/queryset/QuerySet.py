@@ -229,8 +229,9 @@ class QuerySet(object):
 		if self._fields is not None:
 			kwargs['fields'] = self._fields
 
-		if 'timeout' not in kwargs:
-			kwargs['timeout'] = self.timeout
+		# Not supported in pymongo 3.6
+		#if 'timeout' not in kwargs:
+		#	kwargs['timeout'] = self.timeout
 
 		if 'read_preference' not in kwargs and self.readPref is not None:
 			kwargs['read_preference'] = self.readPref
