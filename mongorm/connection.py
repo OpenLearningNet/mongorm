@@ -33,7 +33,9 @@ def getConnection( ):
 	if connection is None:
 		connectionArgs = {}
 		
-		for key in ['host', 'port', 'replicaSet', 'read_preference']:
+		# read_preference Not supported in pymongo 3.0+.
+		# it should be an option on get_database, get_collection, with_options
+		for key in ['host', 'port', 'replicaSet', 'username', 'password', 'ssl', 'ssl_cert_reqs']:
 			if key in connectionSettings:
 				connectionArgs[key] = connectionSettings[key]
 
@@ -95,10 +97,6 @@ def getDatabase( ):
 		connection = getConnection( )
 		databaseName = connectionSettings['database']
 		database = connection[databaseName]
-		
-		if 'username' in connectionSettings and \
-			'password' in connectionSettings:
-			database.authenticate( connectionSettings['username'], connectionSettings['password'] )
 
 		ensureIndexes()
 	

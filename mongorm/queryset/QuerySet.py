@@ -137,6 +137,8 @@ class QuerySet(object):
 		"""Performs an update on the collection, using MongoDB atomic modifiers.
 		
 		If upsert is specified, the document will be created if it doesn't exist.
+
+		DEPRECATED:
 		If safeUpdate is specified, the success of the update will be checked and
 		the number of modified documents will be returned.
 		
@@ -171,7 +173,9 @@ class QuerySet(object):
 		
 		if not modifyAndReturn:
 			# standard 'update'
-			ret = self.collection.update( query, updates, upsert=upsert, safe=safeUpdate, multi=updateAllDocuments )
+			# safe not supported in pymongo 3.0+, use w for write concern instead
+			w = 1 if safeUpdate else 0
+			ret = self.collection.update( query, updates, upsert=upsert, w=w, multi=updateAllDocuments )
 			if ret is None:
 				return None
 			if 'n' in ret:
@@ -226,29 +230,35 @@ class QuerySet(object):
 			if len(sorting) > 0:
 				kwargs['sort'] = sorting
 		
-		if self._fields is not None:
-			kwargs['fields'] = self._fields
+		# fields not supported in pymongo 3.0+, use projection instead
+		if 'fields' in kwargs:
+			kwargs['projection'] = kwargs['fields']
+			del kwargs['fields']
+		elif self._fields is not None:
+			kwargs['projection'] = self._fields
 
-		if 'timeout' not in kwargs:
-			kwargs['timeout'] = self.timeout
-
-		if 'read_preference' not in kwargs and self.readPref is not None:
-			kwargs['read_preference'] = self.readPref
-		
-		# Not supported in pymongo 3.0+
+		# timeout not supported in pymongo 3.0+, use no_cursor_timeout instead
 		if 'timeout' in kwargs:
-			del kwargs['timeout']
-		
-		if 'read_preference' in kwargs:
-			del kwargs['read_preference']
-		# Not supported in pymongo 3.0+
+			kwargs['no_cursor_timeout'] = not kwargs['timeout']
+		else:
+			kwargs['no_cursor_timeout'] = not self.timeout
 
 		search = self._get_query( )
 
-		if '_types' in search and 'fields' in kwargs and not kwargs['fields'].get( '_types' ) and all(kwargs['fields'].itervalues( )):
-			kwargs['fields']['_types'] = True
+		if '_types' in search and 'projection' in kwargs and not kwargs['projection'].get( '_types' ) and all(kwargs['projection'].itervalues( )):
+			kwargs['projection']['_types'] = True
 
-		return self.collection.find( search, **kwargs )
+		# read_preference not supported in pymongo 3.0+, use with_options() instead
+		if 'read_preference' in kwargs:
+			read_preference = kwargs['read_preference']
+			del kwargs['read_preference']
+		else:
+			read_preference = self.readPref
+
+		if read_preference:
+			return self.collection.with_options(read_preference=read_preference).find(search, **kwargs)
+		else:
+			return self.collection.find( search, **kwargs )
 	
 	def _get_query( self, forUpsert=False ):
 		search = self.query.toMongo( self.document )
