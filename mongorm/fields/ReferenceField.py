@@ -9,7 +9,7 @@ from mongorm.blackMagic import serialiseTypesForDocumentType
 class ReferenceField(BaseField):
 	def __init__( self, documentClass, *args, **kwargs ):
 		super(ReferenceField, self).__init__( *args, **kwargs )
-		
+		self._use_ref_id = True
 		self.inputDocumentClass = documentClass
 	
 	def _getClassInfo( self ):
@@ -63,9 +63,14 @@ class ReferenceField(BaseField):
 	def toQuery( self, pythonValue, dereferences=[] ):
 		if pythonValue is None:
 			return None
-		return {
-			'_ref': self.fromPython( pythonValue )['_ref']
-		}
+		if self._use_ref_id:
+			return {
+				'_ref.$id': self.fromPython( pythonValue )['_ref'].id
+			}
+		else:
+			return {
+				'_ref': self.fromPython( pythonValue )['_ref']
+			}
 	
 	def toPython( self, bsonValue ):
 		self._getClassInfo( )
