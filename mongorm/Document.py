@@ -30,6 +30,12 @@ class Document(BaseDocument):
 		
 		if '_id' in self._data and self._data['_id'] is None:
 			del self._data['_id']
+
+		# safe not supported in pymongo 3.0+, use w for write concern instead
+		if 'safe' in kwargs:
+			kwargs['w'] = 1 if kwargs['safe'] else 0
+			del kwargs['safe']
+
 		try:
 			if forceInsert:
 				newId = collection.insert( self._data, **kwargs )
