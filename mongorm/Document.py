@@ -1,4 +1,5 @@
 import pymongo
+import warnings 
 
 from mongorm.BaseDocument import BaseDocument
 from mongorm.connection import getDatabase
@@ -35,6 +36,7 @@ class Document(BaseDocument):
 		if 'safe' in kwargs:
 			kwargs['w'] = 1 if kwargs['safe'] else 0
 			del kwargs['safe']
+			warnings.warn('{} safe not supported in pymongo 3.0+, use w for write concern instead'.format(collection.full_name), DeprecationWarning)
 
 		try:
 			if forceInsert:
