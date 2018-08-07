@@ -1,7 +1,7 @@
 class BaseField(object):
 	_resyncAtSave = False
 	
-	def __init__( self, default=None, unique=False, dbField=None, primaryKey=False, shardKey=False, dropDups=False, **kwargs ):
+	def __init__( self, default=None, unique=False, dbField=None, primaryKey=False, dropDups=False, **kwargs ):
 		self.default = default
 		self.unique = unique
 		self.dropDups = dropDups
@@ -9,7 +9,6 @@ class BaseField(object):
 		self.primaryKey = primaryKey
 		if primaryKey:
 			self.dbField = '_id'
-		self.shardKey = shardKey
 	
 	def fromPython( self, pythonValue, dereferences=[], modifier=None ):
 		raise NotImplementedError

@@ -9,7 +9,7 @@ from mongorm.errors import OperationError
 class Document(BaseDocument):
 	__internal__ = True
 	__needs_primary_key__ = True
-	__is_sharded__ = False
+	__shard_key__ = None
 	
 	def __eq__(self, other):
 		if isinstance(other, self.__class__) and hasattr(other, self._primaryKeyField):
@@ -43,16 +43,16 @@ class Document(BaseDocument):
 			if forceInsert:
 				newId = collection.insert( self._data, **kwargs )
 			else:
-				if self.__is_sharded__:
+				if self.__shard_key__:
 					# This is specific to cosmosdb because it does not support collection.save when the collection is sharded.
-					if self._shardKeyField != '_id' and self._shardKeyField not in self._data:
+					if self.__shard_key__ != '_id' and self.__shard_key__ not in self._data:
 						raise OperationError('Could not find shard key in document data to save')
 					
 					if '_id' not in self._data:
 						self._data['_id'] = ObjectId()
 
 					_filter = {
-						self._shardKeyField: self._data[self._shardKeyField],
+						self.__shard_key__: self._data[self.__shard_key__],
 						'_id': self._data['_id']
 					}
 					kwargs['upsert'] = True

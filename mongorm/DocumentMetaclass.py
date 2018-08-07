@@ -36,8 +36,6 @@ class DocumentMetaclass(type):
 		collection = name.lower()
 		needsPrimaryKey = False
 		primaryKey = None
-		needsShardKey  = False
-		shardKey = None
 		
 		# find all inherited fields and record them
 		for base in bases:
@@ -50,9 +48,6 @@ class DocumentMetaclass(type):
 		
 		if not '__internal__' in attrs:
 			attrs['_collection'] = collection
-		
-		if '__is_sharded__' in attrs:
-			 needsShardKey = attrs['__is_sharded__']
 
 		# find all fields and add them to our field list
 		for attrName, attrValue in attrs.items( ):
@@ -74,9 +69,6 @@ class DocumentMetaclass(type):
 			if value.primaryKey:
 				assert primaryKey is None, "Can only have one primary key per document"
 				primaryKey = field
-			if value.shardKey:
-				assert shardKey is None, "Can only have one shard key per document"
-				shardKey = field
 			if value.unique:
 				keyOpts = { 'unique': True }
 				
@@ -91,13 +83,6 @@ class DocumentMetaclass(type):
 			primaryKey = 'id'
 		
 		attrs['_primaryKeyField'] = primaryKey
-		
-		# add a shard key default is _id
-		if shardKey is None:
-			shardKey = '_id'
-		
-		if needsShardKey:
-			attrs['_shardKeyField'] = shardKey
 
 		# make sure we have all indexes that are specified
 		if 'meta' in attrs:
