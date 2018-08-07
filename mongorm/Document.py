@@ -1,6 +1,6 @@
 import pymongo
 import warnings 
-
+from bson import ObjectId
 from mongorm.BaseDocument import BaseDocument
 from mongorm.connection import getDatabase
 
@@ -49,14 +49,15 @@ class Document(BaseDocument):
 						raise OperationError('Could not find shard key in document data to save')
 					
 					if '_id' not in self._data:
-						newId = collection.insert( self._data, **kwargs )
-					else:
-						_filter = {
-							self._shardKeyField: self._data[self._shardKeyField],
-							'_id': self._data['_id']
-						}
-						collection.update(_filter, self._data, upsert=True, **kwargs)
-						newId = self._data['_id']
+						self._data['_id'] = ObjectId()
+
+					_filter = {
+						self._shardKeyField: self._data[self._shardKeyField],
+						'_id': self._data['_id']
+					}
+					kwargs['upsert'] = True
+					collection.update(_filter, self._data, **kwargs)
+					newId = self._data['_id']
 				else:
 					newId = collection.save( self._data, **kwargs )
 		except pymongo.errors.OperationFailure, err:
