@@ -9,6 +9,7 @@ from mongorm.errors import OperationError
 class Document(BaseDocument):
 	__internal__ = True
 	__needs_primary_key__ = True
+	__is_sharded__ = False
 	
 	def __eq__(self, other):
 		if isinstance(other, self.__class__) and hasattr(other, self._primaryKeyField):
@@ -40,9 +41,23 @@ class Document(BaseDocument):
 
 		try:
 			if forceInsert:
-				newId = collection.insert( self._data, **kwargs )
+				newId = collection.insert_one( self._data, **kwargs )
 			else:
-				newId = collection.save( self._data, **kwargs )
+				if self.__is_sharded__:
+					# This is specific to cosmosdb because it does not support collection.save when the collection is sharded.
+					if self._shardKeyField != '_id' and self._shardKeyField not in self._data:
+						raise OperationError('Could not find shard key in document data to save')
+					
+					if '_id' not in self._data:
+						newId = collection.insert_one( self._data, **kwargs )
+					else:
+						_filter = {
+							self._shardKeyField: self._data[self._shardKeyField],
+							'_id': self._data['_id']
+						}
+						newId = collection.update_one(_filter, self._data, upsert=True, **kwargs)
+				else:
+					newId = collection.save( self._data, **kwargs )
 		except pymongo.errors.OperationFailure, err:
 			message = 'Could not save document (%s)'
 			if u'duplicate key' in unicode(err):
