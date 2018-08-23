@@ -63,14 +63,17 @@ class ReferenceField(BaseField):
 	def toQuery( self, pythonValue, dereferences=[] ):
 		if pythonValue is None:
 			return None
+
+		_ref = self.fromPython( pythonValue )['_ref']
 		# Note: this is only specific for cosmosdb which doesn't support dbref
 		if self._use_ref_id:
 			return {
-				'_ref.$id': self.fromPython( pythonValue )['_ref'].id
+				'_ref.$ref': _ref.collection,
+				'_ref.$id': _ref.id,
 			}
 		else:
 			return {
-				'_ref': self.fromPython( pythonValue )['_ref']
+				'_ref': _ref
 			}
 	
 	def toPython( self, bsonValue ):
