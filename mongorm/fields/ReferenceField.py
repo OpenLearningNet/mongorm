@@ -9,7 +9,6 @@ from mongorm.blackMagic import serialiseTypesForDocumentType
 class ReferenceField(BaseField):
 	def __init__( self, documentClass, *args, **kwargs ):
 		super(ReferenceField, self).__init__( *args, **kwargs )
-		self._use_ref_id = kwargs.get('use_ref_id', False)
 		self.inputDocumentClass = documentClass
 	
 	def _getClassInfo( self ):
@@ -64,17 +63,9 @@ class ReferenceField(BaseField):
 		if pythonValue is None:
 			return None
 
-		_ref = self.fromPython( pythonValue )['_ref']
-		# Note: this is only specific for cosmosdb which doesn't support dbref
-		if self._use_ref_id:
-			return {
-				'_ref.$ref': _ref.collection,
-				'_ref.$id': _ref.id,
-			}
-		else:
-			return {
-				'_ref': _ref
-			}
+		return {
+			'_ref': self.fromPython( pythonValue )['_ref']
+		}
 	
 	def toPython( self, bsonValue ):
 		self._getClassInfo( )
