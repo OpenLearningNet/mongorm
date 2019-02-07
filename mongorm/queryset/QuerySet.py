@@ -9,10 +9,11 @@ from mongorm.blackMagic import serialiseTypesForDocumentType
 PROJECTIONS = frozenset(['slice'])
 
 class QuerySet(object):
-	def __init__( self, document, collection, query=None, orderBy=None, fields=None, timeout=True, readPref=None, types=None ):
+	def __init__( self, document, collection, query=None, orderBy=None, fields=None, timeout=True, readPref=None, types=None, stackTraceFormatter=None ):
 		self.document = document
 		self.documentTypes = serialiseTypesForDocumentType( document )
 		self.collection = collection
+		self.stackTraceFormatter = stackTraceFormatter
 		self.orderBy = []
 		self._fields = fields
 		self.timeout = timeout
@@ -46,6 +47,7 @@ class QuerySet(object):
 			'timeout': self.timeout,
 			'readPref': self.readPref,
 			'types': self.types,
+			'stackTraceFormatter': self.stackTraceFormatter,
 		}
 
 	def get( self, query=None, **search ):
@@ -99,9 +101,8 @@ class QuerySet(object):
 		if self._savedCount is None:
 			if self._savedItems is None:
 				cursor = self.collection.find( self._get_query( ) )
-				global connectionSettings
-				if connectionSettings['format_stack_trace']:
-					cursor.comment(connectionSettings['format_stack_trace']())
+				if self.stackTraceFormatter:
+					cursor.comment(self.stackTraceFormatter())
 
 				self._savedCount = cursor.count( )
 			else:
@@ -267,9 +268,8 @@ class QuerySet(object):
 
 		cursor = collection.find( search, **kwargs )
 
-		global connectionSettings
-		if connectionSettings['format_stack_trace']:
-			cursor.comment(connectionSettings['format_stack_trace']())
+		if self.stackTraceFormatter:
+			cursor.comment(self.stackTraceFormatter())
 
 		return cursor
 

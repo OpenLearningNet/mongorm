@@ -5,13 +5,17 @@ database = None
 
 connectionSettings = None
 
+stackTraceFormatter = None
+
 stagedIndexes = []
 registeredIndexes = []
 droppedIndexes = []
 collectionIndexInfo = {}
 
-def connect( databaseName, autoEnsure=False, **kwargs ):
-	global database, connection, connectionSettings, autoEnsureIndexes
+def connect( databaseName, autoEnsure=False, formatStackTrace=None, **kwargs ):
+	global database, connection, connectionSettings, autoEnsureIndexes, stackTraceFormatter
+
+	stackTraceFormatter = formatStackTrace
 
 	autoEnsureIndexes = autoEnsure
 
