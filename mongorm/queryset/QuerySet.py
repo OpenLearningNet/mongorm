@@ -31,7 +31,7 @@ class QuerySet(object):
 				if not issubclass(subclass, self.document):
 					raise TypeError, "'%s' is not a subclass of '%s'" % (subclass, self.document)
 				self.types.append( subclass )
-	
+
 	def _getNewInstance( self, data ):
 		documentName = data.get( '_types', [self.document.__name__] )[0]
 		documentClass = DocumentRegistry.getDocument( documentName )
@@ -47,32 +47,32 @@ class QuerySet(object):
 			'readPref': self.readPref,
 			'types': self.types,
 		}
-	
+
 	def get( self, query=None, **search ):
 		if query is None:
 			query = Q( **search )
 		self.query &= query
 		#self._mergeSearch( search )
 		#print 'get:', newQuery.toMongo( self.document )
-		
+
 		# limit of 2 so we know if multiple matched without running a count()
 		result = list( self._do_find( limit=2 ) )
-		
+
 		if len(result) == 0:
 			raise self.document.DoesNotExist( )
-		
+
 		if len(result) == 2:
 			raise self.document.MultipleObjectsReturned( )
-		
+
 		return self._getNewInstance( result[0] )
-	
+
 	def all( self ):
 		return self
 
 	def close( self ):
 		if self._savedItems:
 			self._savedItems.close()
-	
+
 	def filter( self, query=None, **search ):
 		if query is None:
 			query = Q( **search )
@@ -94,61 +94,61 @@ class QuerySet(object):
 		kwargs = self._get_kwargs( )
 		kwargs['types'] = types
 		return QuerySet( self.document, self.collection, **kwargs )
-	
+
 	def count( self ):
 		if self._savedCount is None:
 			if self._savedItems is None:
 				self._savedCount = self.collection.find( self._get_query( ) ).count( )
 			else:
 				self._savedCount = self._savedItems.count( )
-		
+
 		return self._savedCount
-	
+
 	def __len__( self ):
 		return self.count( )
-	
+
 	def delete( self ):
 		self.collection.remove( self.query.toMongo( self.document ) )
-	
+
 	def _prepareActions( self, **actions ):
 		updates = {}
-		
+
 		for action, value in actions.iteritems( ):
 			assert '__' in action, 'Action "%s" not legal for update' % (action,)
 			modifier, fieldName = action.split( '__', 1 )
 			assert modifier in ['set', 'unset', 'setOnInsert', 'inc', 'dec', 'push', 'pushAll', 'pull', 'pullAll'], 'Unknown modifier "%s"' % modifier
-			
+
 			if '$'+modifier not in updates:
 				updates['$'+modifier] = {}
-			
+
 			translatedName = fieldName.replace('__', '.')
-			
+
 			mongoValues = Q( { fieldName: value } ).toMongo( self.document, forUpdate=True, modifier=modifier )
 			#print mongoValues
 			mongoValue = mongoValues[translatedName]
-			
+
 			updates['$'+modifier].update( {
 				translatedName: mongoValue
 			} )
-		
+
 		return updates
-	
+
 	def update( self, upsert=False, safeUpdate=False, modifyAndReturn=False, returnAfterUpdate=False, updateAllDocuments=False, **actions ):
 		"""Performs an update on the collection, using MongoDB atomic modifiers.
-		
+
 		If upsert is specified, the document will be created if it doesn't exist.
 
 		DEPRECATED:
 		If safeUpdate is specified, the success of the update will be checked and
 		the number of modified documents will be returned.
-		
+
 		If modifyAndReturn is specified, a findAndModify operation will be executed
 		instead of an update operation. The *original* document instance (before any
-		modifications) will be returned, unless returnAfterUpdate is True. If no 
+		modifications) will be returned, unless returnAfterUpdate is True. If no
 		document matched the specified query, None will be returned."""
-		
+
 		updates = self._prepareActions( **actions )
-		
+
 		# XXX: why was this here? we shouldn't be forcing this
 		#if '$set' not in updates:
 		#	updates['$set'] = {}
@@ -157,20 +157,20 @@ class QuerySet(object):
 
 		#print 'query:', self.query.toMongo( self.document )
 		#print 'update:', updates
-		
+
 		query = self._get_query( forUpsert=True )
 		#print query, 'query'
 		#print updates, 'update'
-		
+
 		# {'_types': {$all:['BaseThingUpsert']}, 'name': 'upsert1'}
 		# {'$set': {'value': 42}, '$addToSet': {'_types': {$each: ['BTI', 'BaseThingUpsert']}}}
-		
+
 		updates['$addToSet'] = {
 			'_types': {
 				'$each': self.documentTypes
 			}
 		}
-		
+
 		if not modifyAndReturn:
 			# standard 'update'
 			# safe not supported in pymongo 3.0+, use w for write concern instead
@@ -188,24 +188,24 @@ class QuerySet(object):
 				upsert=upsert,
 				new=returnAfterUpdate,
 			)
-			
+
 			if result is None or len(result) == 0:
 				return None
 			else:
 				return self._getNewInstance( result )
-	
+
 	def order_by( self, *fields ):
 		kwargs = self._get_kwargs( )
 		newOrderBy = self.orderBy[:]
 		newOrderBy.extend( fields )
 		kwargs['orderBy'] = newOrderBy
 		return QuerySet( self.document, self.collection, **kwargs )
-	
+
 	def only( self, *fields ):
 		kwargs = self._get_kwargs( )
 		kwargs['fields'] = dict(self._fields or {}, **dict.fromkeys( fields, True ))
 		return QuerySet( self.document, self.collection, **kwargs )
-	
+
 	def ignore( self, *fields ):
 		kwargs = self._get_kwargs( )
 		kwargs['fields'] = dict(self._fields or {}, **dict.fromkeys( fields, False ))
@@ -222,14 +222,14 @@ class QuerySet(object):
 					value = {'$%s' % projection: value}
 			kwargs['fields'][field] = value
 		return QuerySet( self.document, self.collection, **kwargs )
-	
+
 	def _do_find( self, **kwargs ):
 		if 'sort' not in kwargs:
 			sorting = sortListToPyMongo( self.orderBy )
-			
+
 			if len(sorting) > 0:
 				kwargs['sort'] = sorting
-		
+
 		# fields not supported in pymongo 3.0+, use projection instead
 		if 'fields' in kwargs:
 			kwargs['projection'] = kwargs['fields']
@@ -256,10 +256,18 @@ class QuerySet(object):
 			read_preference = self.readPref
 
 		if read_preference:
-			return self.collection.with_options(read_preference=read_preference).find(search, **kwargs)
+			collection = self.collection.with_options(read_preference=read_preference)
 		else:
-			return self.collection.find( search, **kwargs )
-	
+			collection = self.collection
+
+		cursor = collection.find( search, **kwargs )
+
+		global connectionSettings
+		if connectionSettings['format_stack_trace']:
+			cursor.comment(connectionSettings['format_stack_trace']())
+
+		return cursor
+
 	def _get_query( self, forUpsert=False ):
 		search = self.query.toMongo( self.document )
 		types = self.documentTypes
@@ -271,13 +279,13 @@ class QuerySet(object):
 			else:
 				search['_types'] = self.document.__name__ # filter by the type that was used
 		return search
-	
+
 	def __iter__( self ):
 		#print 'iter:', self.query.toMongo( self.document ), self.collection
 		if self._savedItems is None:
 			self._savedItems = self._do_find( )
 		return (self._getNewInstance( item ) for item in self._savedItems.clone( ))
-	
+
 	def __getitem__( self, index ):
 		if isinstance(index, int):
 			getOne = True
@@ -290,11 +298,11 @@ class QuerySet(object):
 			assert index.step is None, "Slicing with step not supported by mongorm"
 		else:
 			assert False, "item not an index"
-		
+
 		#print self.query.toMongo( self.document )
 		#items = self.collection.find( self.query.toMongo( self.document ), skip=skip, limit=limit )
 		items = self._do_find( skip=skip, limit=limit )
-		
+
 		if getOne:
 			try:
 				item = items[0]
@@ -308,36 +316,36 @@ class QuerySet(object):
 					document = self._getNewInstance( item )
 					yield document
 			return _yieldItems( )
-	
+
 	def first( self ):
 		try:
 			return self[0]
 		except IndexError:
 			return None
-	
+
 	def __call__( self, **search ):
 		return self.filter( **search )
-	
+
 	def ensure_indexed( self ):
 		"""Ensures that the most optimal index for the query so far is actually in the database.
-		
+
 		Call this whenever a query is deemed expensive."""
-		
+
 		indexKeys = []
-		
+
 		indexKeys.extend( self._queryToIndex( self.query.toMongo( self.document ) ) )
-		
+
 		indexKeys.extend( sortListToPyMongo( self.orderBy ) )
-		
+
 		uniqueKeys = []
 		for key in indexKeys:
 			if key not in uniqueKeys:
 				uniqueKeys.append( key )
-		
+
 		self.collection.ensure_index( uniqueKeys )
-		
+
 		return self
-	
+
 	def _queryToIndex( self, query ):
 		for key, value in query.iteritems( ):
 			if key in ('$and', '$or'):

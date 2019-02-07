@@ -14,7 +14,7 @@ def connect( databaseName, autoEnsure=False, **kwargs ):
 	global database, connection, connectionSettings, autoEnsureIndexes
 
 	autoEnsureIndexes = autoEnsure
-	
+
 	connectionSettings = {}
 	connectionSettings.update( kwargs )
 	connectionSettings.update( {
@@ -27,12 +27,12 @@ def connect( databaseName, autoEnsure=False, **kwargs ):
 
 def getConnection( ):
 	global database, connection, connectionSettings
-	
+
 	assert connectionSettings is not None, "No database specified: call mongorm.connect() before use"
-	
+
 	if connection is None:
 		connectionArgs = {}
-		
+
 		# read_preference Not supported in pymongo 3.0+.
 		# it should be an option on get_database, get_collection, with_options
 		for key in ['host', 'port', 'replicaSet', 'username', 'password', 'ssl', 'ssl_cert_reqs']:
@@ -40,9 +40,9 @@ def getConnection( ):
 				connectionArgs[key] = connectionSettings[key]
 
 		client = MongoReplicaSetClient if 'replicaSet' in connectionArgs else MongoClient
-		
+
 		connection = client( **connectionArgs )
-	
+
 	return connection
 
 def ensureIndexes( ):
@@ -86,18 +86,18 @@ def ensureIndexes( ):
 		kwargs['background'] = True
 
 		database[collection].ensure_index(key_or_list, **kwargs)
-	
+
 	registeredIndexes += stagedIndexes
 	stagedIndexes = []
 
 def getDatabase( ):
 	global database, connectionSettings
-	
+
 	if database is None:
 		connection = getConnection( )
 		databaseName = connectionSettings['database']
 		database = connection[databaseName]
 
 		ensureIndexes()
-	
+
 	return database
