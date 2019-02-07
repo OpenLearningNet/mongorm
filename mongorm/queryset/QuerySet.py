@@ -98,7 +98,12 @@ class QuerySet(object):
 	def count( self ):
 		if self._savedCount is None:
 			if self._savedItems is None:
-				self._savedCount = self.collection.find( self._get_query( ) ).count( )
+				cursor = self.collection.find( self._get_query( ) )
+				global connectionSettings
+				if connectionSettings['format_stack_trace']:
+					cursor.comment(connectionSettings['format_stack_trace']())
+
+				self._savedCount = cursor.count( )
 			else:
 				self._savedCount = self._savedItems.count( )
 
