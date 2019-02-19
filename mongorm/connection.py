@@ -5,17 +5,17 @@ database = None
 
 connectionSettings = None
 
-stackTraceFormatter = None
+pymongoWrapper = None
 
 stagedIndexes = []
 registeredIndexes = []
 droppedIndexes = []
 collectionIndexInfo = {}
 
-def connect( databaseName, autoEnsure=False, formatStackTrace=None, **kwargs ):
-	global database, connection, connectionSettings, autoEnsureIndexes, stackTraceFormatter
+def connect( databaseName, autoEnsure=False, wrapPymongo=None, **kwargs ):
+	global database, connection, connectionSettings, autoEnsureIndexes, pymongoWrapper
 
-	stackTraceFormatter = formatStackTrace
+	pymongoWrapper = wrapPymongo
 
 	autoEnsureIndexes = autoEnsure
 
