@@ -9,11 +9,10 @@ from mongorm.blackMagic import serialiseTypesForDocumentType
 PROJECTIONS = frozenset(['slice'])
 
 class QuerySet(object):
-	def __init__( self, document, collection, query=None, orderBy=None, fields=None, timeout=True, readPref=None, types=None, stackTraceFormatter=None ):
+	def __init__( self, document, collection, query=None, orderBy=None, fields=None, timeout=True, readPref=None, types=None ):
 		self.document = document
 		self.documentTypes = serialiseTypesForDocumentType( document )
 		self.collection = collection
-		self.stackTraceFormatter = stackTraceFormatter
 		self.orderBy = []
 		self._fields = fields
 		self.timeout = timeout
@@ -47,7 +46,6 @@ class QuerySet(object):
 			'timeout': self.timeout,
 			'readPref': self.readPref,
 			'types': self.types,
-			'stackTraceFormatter': self.stackTraceFormatter,
 		}
 
 	def get( self, query=None, **search ):
@@ -100,11 +98,7 @@ class QuerySet(object):
 	def count( self ):
 		if self._savedCount is None:
 			if self._savedItems is None:
-				cursor = self.collection.find( self._get_query( ) )
-				if self.stackTraceFormatter:
-					cursor.comment(self.stackTraceFormatter())
-
-				self._savedCount = cursor.count( )
+				self._savedCount = self.collection.count( self._get_query( ) )
 			else:
 				self._savedCount = self._savedItems.count( )
 
@@ -266,12 +260,7 @@ class QuerySet(object):
 		else:
 			collection = self.collection
 
-		cursor = collection.find( search, **kwargs )
-
-		if self.stackTraceFormatter:
-			cursor.comment(self.stackTraceFormatter())
-
-		return cursor
+		return collection.find( search, **kwargs )
 
 	def _get_query( self, forUpsert=False ):
 		search = self.query.toMongo( self.document )

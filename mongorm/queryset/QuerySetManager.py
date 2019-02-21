@@ -14,5 +14,5 @@ class QuerySetManager(object):
 			database = getDatabase( )
 			self.collection = database[owner._collection]
 
-		from mongorm.connection import stackTraceFormatter
-		return QuerySet( owner, self.collection, stackTraceFormatter=stackTraceFormatter )
+		from mongorm.connection import pymongoWrapper
+		return QuerySet( owner, pymongoWrapper(self.collection) )
