@@ -21,32 +21,32 @@ def test_inheritance_magic( ):
 
 	class AnotherThing(BaseThing):
 		another = StringField( )
-	
+
 	BaseThing.objects.delete( )
-	
+
 	b = BaseThing( name='basey' ).save( )
 	e = ExtendedThing( name='extendy', extended='extension foo' ).save( )
 	a = AnotherThing( name='another', another='another bar' ).save( )
-	
+
 	bOut = BaseThing.objects.get( name='basey' )
 	assert isinstance( bOut, BaseThing )
 	assert not isinstance( bOut, (ExtendedThing, AnotherThing) )
 	assert bOut.name == 'basey'
-	
+
 	eOut = BaseThing.objects.get( name='extendy' )
 	assert isinstance( eOut, BaseThing )
 	assert isinstance( eOut, ExtendedThing )
 	assert not isinstance( eOut, AnotherThing )
 	assert eOut.name == 'extendy'
 	assert eOut.extended == 'extension foo'
-	
+
 	aOut = BaseThing.objects.get( name='another' )
 	assert isinstance( aOut, BaseThing )
 	assert isinstance( aOut, AnotherThing )
 	assert not isinstance( aOut, ExtendedThing )
 	assert aOut.name == 'another'
 	assert aOut.another == 'another bar'
-	
+
 	aOutSet = AnotherThing.objects.filter( another='another bar' )
 	assert aOutSet.count( ) == 1
 	aOut2 = aOutSet[0]
@@ -55,7 +55,7 @@ def test_inheritance_magic( ):
 	assert not isinstance( aOut2, ExtendedThing )
 	assert aOut2.name == 'another'
 	assert aOut2.another == 'another bar'
-	
+
 	# test backwards compatability
 	assert BaseThing.objects._getNewInstance( {
 		"_id" : ObjectId("4f72c55402ac3601db000000"),
@@ -65,30 +65,30 @@ def test_inheritance_magic( ):
 def test_inheritance_upsert( ):
 	DocumentRegistry.clear( )
 	connect( 'test_mongorm' )
-	
+
 	class BaseThingUpsert(Document):
 		name = StringField( )
 		value = IntegerField( )
-	
+
 	class ExtendedThingUpsert(BaseThingUpsert):
 		extended = StringField( )
-	
+
 	BaseThingUpsert.objects.delete( )
-	
+
 	assert BaseThingUpsert.objects.count( ) == 0
-	
+
 	for i in range( 2 ):
 		BaseThingUpsert.objects.filter( name='upsert1' ).update(
 			upsert=True,
 			set__name='upsert1',
 			set__value=42,
 		)
-	
+
 	item = BaseThingUpsert.objects.get( name='upsert1' )
-	
+
 	assert BaseThingUpsert.objects.count( ) == 1
 	assert item.value == 42
-	
+
 	for i in range( 2 ):
 		ExtendedThingUpsert.objects.filter( name='upsert2' ).update(
 			upsert=True,
@@ -96,9 +96,9 @@ def test_inheritance_upsert( ):
 			set__extended='ext',
 			set__value=42,
 		)
-	
+
 	item = ExtendedThingUpsert.objects.get( name='upsert2' )
-	
+
 	assert len( list( ExtendedThingUpsert.objects.all( ) ) ) == 1
 	assert len( list( BaseThingUpsert.objects.all( ) ) ) == 2
 	assert ExtendedThingUpsert.objects.count( ) == 1
@@ -116,9 +116,9 @@ def test_inheritance_backwards( ):
 		extended = StringField( )
 
 	BaseThingBackwards.objects.delete( )
-	
+
 	BaseThingBackwards.objects.collection.insert( { 'name': 'test', 'value': 43 } )
-	
+
 	assert BaseThingBackwards.objects.count( ) == 1
 	assert len( list( BaseThingBackwards.objects.all( ) ) ) == 1
 	assert ExtendedThingBackwards.objects.count( ) == 0
