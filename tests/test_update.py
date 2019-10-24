@@ -71,10 +71,6 @@ def test_push_pull_operators( ):
 	) == {'$push': {'values': 'spam'}}
 
 	assert TestPushPull.objects._prepareActions(
-		pushAll__values=['spam', 'eggs']
-	) == {'$pushAll': {'values': ['spam', 'eggs']}}
-
-	assert TestPushPull.objects._prepareActions(
 		pull__values='spam'
 	) == {'$pull': {'values': 'spam'}}
 
@@ -94,15 +90,6 @@ def test_push_pull_operators( ):
 		safeUpdate=True,
 		updateAllDocuments=True,
 		push__values='spam'
-	) == 2
-
-	assert TestPushPull.objects.get( pk=a.id ).values == ['spam']
-	assert TestPushPull.objects.get( pk=b.id ).values == ['eggs', 'spam']
-
-	assert TestPushPull.objects.update(
-		safeUpdate=True,
-		updateAllDocuments=True,
-		pushAll__values=[]
 	) == 2
 
 	assert TestPushPull.objects.get( pk=a.id ).values == ['spam']
@@ -138,7 +125,13 @@ def test_push_pull_operators( ):
 	assert TestPushPull.objects.update(
 		safeUpdate=True,
 		updateAllDocuments=True,
-		pushAll__values=['spam', 'eggs']
+		push__values='spam'
+	) == 2
+
+	assert TestPushPull.objects.update(
+		safeUpdate=True,
+		updateAllDocuments=True,
+		push__values='eggs'
 	) == 2
 
 	assert TestPushPull.objects.get( pk=a.id ).values == ['spam', 'eggs']

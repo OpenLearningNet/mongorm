@@ -252,12 +252,6 @@ def test_push( ):
 	) == {
 		'$push': {'names': '123'}
 	}
-	
-	assert TestPush.objects._prepareActions(
-		pushAll__names=['123', '456']
-	) == {
-		'$pushAll': {'names': ['123', '456']}
-	}
 
 def test_in_operator( ):
 	"""Tests in operator works with lists"""
