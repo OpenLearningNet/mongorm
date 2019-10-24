@@ -269,7 +269,7 @@ class QuerySet(object):
 			search['_types'] = {'$in': [subtype.__name__ for subtype in self.types]}
 		elif len(types) > 1: # only filter when looking at a subclass
 			if forUpsert:
-				search['_types'] = {'$all':[self.document.__name__]} # filter by the type that was used
+				search['_types'] = { '$elemMatch': { '$eq': self.document.__name__ } } # filter by the type that was used
 			else:
 				search['_types'] = self.document.__name__ # filter by the type that was used
 		return search
