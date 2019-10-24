@@ -15,4 +15,7 @@ class QuerySetManager(object):
 			self.collection = database[owner._collection]
 
 		from mongorm.connection import pymongoWrapper
-		return QuerySet( owner, pymongoWrapper(self.collection) )
+		if pymongoWrapper:
+			return QuerySet( owner, pymongoWrapper(self.collection) )
+		else:
+			return QuerySet(owner, self.collection)
