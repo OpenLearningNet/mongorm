@@ -14,11 +14,11 @@ class DateField(BaseField):
 			try:
 				pythonValue = date.fromtimestamp( time.mktime( time.strptime( pythonValue, '%Y-%m-%d' ) ) )
 			except:
-				raise ValueError, "String format of date must be YYYY-MM-DD"
+				raise ValueError("String format of date must be YYYY-MM-DD")
 		
 		# make sure we ended up with a date() object
 		if not isinstance(pythonValue, date):
-			raise ValueError, "Value must be a date object"
+			raise ValueError("Value must be a date object")
 		
 		# convert it to a string since mongo doesn't have a date-only type and datetime
 		# searches would be wrong. this format should still allow sorting, etc.

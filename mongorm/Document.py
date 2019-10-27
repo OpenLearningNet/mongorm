@@ -43,7 +43,7 @@ class Document(BaseDocument):
 				newId = collection.insert( self._data, **kwargs )
 			else:
 				newId = collection.save( self._data, **kwargs )
-		except pymongo.errors.OperationFailure, err:
+		except pymongo.errors.OperationFailure as err:
 			message = 'Could not save document (%s)'
 			if u'duplicate key' in unicode(err):
 				message = u'Tried to save duplicate unique keys (%s)'

@@ -29,7 +29,7 @@ class QuerySet(object):
 		if types:
 			for subclass in types:
 				if not issubclass(subclass, self.document):
-					raise TypeError, "'%s' is not a subclass of '%s'" % (subclass, self.document)
+					raise TypeError("'%s' is not a subclass of '%s'" % (subclass, self.document))
 				self.types.append( subclass )
 
 	def _getNewInstance( self, data ):

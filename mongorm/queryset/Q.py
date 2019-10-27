@@ -1,15 +1,14 @@
-
 class Q(object):
 	def __init__( self, _query=None, **search ):
 		if _query is None:
 			if 'pk' in search:
 				search['id'] = search['pk']
 				del search['pk']
-			
+
 			self.query = search
 		else:
 			self.query = _query
-	
+
 	def toMongo( self, document, forUpdate=False, modifier=None ):
 		newSearch = {}
 		for (name, value) in self.query.iteritems( ):
@@ -21,9 +20,9 @@ class Q(object):
 			if name.startswith('$') and isinstance(value, basestring):
 				newSearch[name] = value
 				continue
-			
+
 			fieldName = name
-			
+
 			MONGO_COMPARISONS = ['gt', 'lt', 'lte', 'gte', 'exists', 'ne', 'all', 'in', 'nin', 'elemMatch']
 			REGEX_COMPARISONS = {
 				'contains': ( '%s', '' ),
@@ -33,10 +32,10 @@ class Q(object):
 
 				'startswith': ( '^%s', '' ),
 				'istartswith': ( '^%s', 'i' ),
-				
+
 				'endswith': ( '%s$', '' ),
 				'iendswith': ( '%s$', 'i' ),
-				
+
 				'matches': ( None, '' ),
 				'imatches': ( None, 'i' ),
 			}
@@ -57,10 +56,10 @@ class Q(object):
 					# not a comparison operator
 					dereferences = chunks[1:]
 					comparison = None
-			
+
 			if fieldName not in document._fields:
-				raise AttributeError, "%s does not contain the field '%s'" % (document.__name__, fieldName)
-			
+				raise AttributeError("%s does not contain the field '%s'" % (document.__name__, fieldName))
+
 			field = document._fields[fieldName]
 			if not forUpdate:
 				if comparison in ARRAY_VALUE_COMPARISONS:
@@ -90,10 +89,10 @@ class Q(object):
 				else:
 					searchValue = field.fromPython( value, dereferences=dereferences, modifier=modifier )
 				targetSearchKey = '.'.join( [field.dbField] + dereferences)
-			
+
 			valueMapper = lambda value: value
-			
-			
+
+
 			if comparison is not None:
 				if comparison in REGEX_COMPARISONS:
 					regex,options = REGEX_COMPARISONS[comparison]
@@ -125,12 +124,12 @@ class Q(object):
 					newSearch[targetSearchKey] = valueMapper(searchValue)
 			else:
 				newSearch[targetSearchKey] = valueMapper(searchValue)
-		
+
 		return newSearch
-	
+
 	def __or__( self, other ):
 		return self.do_merge( other, '$or' )
-	
+
 	def __and__( self, other ):
 		if len( set( self.query.keys() ).intersection( other.query.keys() ) ) > 0:
 			# if the 2 queries have overlapping keys, we need to use a $and to join them.
@@ -141,17 +140,17 @@ class Q(object):
 			newQuery.update( self.query )
 			newQuery.update( other.query )
 			return Q( _query=newQuery )
-	
+
 	def do_merge( self, other, op ):
 		if len(self.query) == 0: return other
 		if len(other.query) == 0: return self
-		
+
 		if op in self.query and len(self.query) == 1:
 			items = self.query[op] + [other]
 		elif op in other.query and len(self.query) == 1:
 			items = other.query[op] + [self]
 		else:
 			items = [ self, other ]
-		
+
 		newQuery = { op: items }
 		return Q( _query=newQuery )
