@@ -50,7 +50,7 @@ class DocumentMetaclass(type):
 			attrs['_collection'] = collection
 		
 		# find all fields and add them to our field list
-		for attrName, attrValue in attrs.items( ):
+		for attrName, attrValue in list(attrs.items( )):
 			if hasattr(attrValue, '__class__') and \
 				issubclass(attrValue.__class__, BaseField):
 				field = attrValue
@@ -109,7 +109,7 @@ class DocumentMetaclass(type):
 		newClass = superNew( cls, name, bases, attrs )
 		
 		# record the document in the fields
-		for field in newClass._fields.values( ):
+		for field in list(newClass._fields.values( )):
 			#field.ownerDocument = newClass
 			field.setOwnerDocument( newClass )
 		

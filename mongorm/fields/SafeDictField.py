@@ -9,7 +9,7 @@ def deepCoded( dictionary, coder ):
 	toCode = deque( [dictionary] )
 	while toCode:
 		nextDictionary = toCode.popleft( )
-		for key, value in nextDictionary.items( ): # can't be iteritems as we're changing the dict
+		for key, value in list(nextDictionary.items( )): # can't be iteritems as we're changing the dict
 			if isinstance(key, basestring):
 				# Keys have to be strings in mongo so this should always occur
 				del nextDictionary[key]

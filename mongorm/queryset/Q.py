@@ -40,7 +40,7 @@ class Q(object):
 				'matches': ( None, '' ),
 				'imatches': ( None, 'i' ),
 			}
-			ALL_COMPARISONS = MONGO_COMPARISONS + REGEX_COMPARISONS.keys()
+			ALL_COMPARISONS = MONGO_COMPARISONS + list(REGEX_COMPARISONS.keys())
 			ARRAY_VALUE_COMPARISONS = ['all', 'in', 'nin']
 
 			comparison = None
@@ -132,7 +132,7 @@ class Q(object):
 		return self.do_merge( other, '$or' )
 
 	def __and__( self, other ):
-		if len( set( self.query.keys() ).intersection( other.query.keys() ) ) > 0:
+		if len( set( self.query.keys() ).intersection( list(other.query.keys()) ) ) > 0:
 			# if the 2 queries have overlapping keys, we need to use a $and to join them.
 			return self.do_merge( other, '$and' )
 		else:
