@@ -1,3 +1,6 @@
+import binascii
+
+from builtins import str, bytes
 from past.builtins import basestring
 from mongorm.fields.DictField import DictField
 
@@ -20,12 +23,12 @@ def deepCoded( dictionary, coder ):
 	return dictionary
 
 def encode( string ):
-	if isinstance(string, unicode):
+	if isinstance(string, str):
 		string = string.encode( 'utf-8' )
-	return string.encode( 'hex' )
+	return bytes(binascii.hexlify(string)).decode('utf-8')
 
 def decode( string ):
-	return string.decode( 'hex' ).decode( 'utf-8' )
+	return bytes(binascii.unhexlify(string)).decode('utf-8')
 
 class SafeDictField(DictField):
 	def fromPython( self, *args, **kwargs ):
