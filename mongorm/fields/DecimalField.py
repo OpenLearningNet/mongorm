@@ -1,3 +1,4 @@
+from builtins import str
 from past.builtins import basestring
 from mongorm.fields.BaseField import BaseField
 

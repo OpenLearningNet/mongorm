@@ -1,5 +1,6 @@
 # -*- coding: utf8 -*-
 
+from builtins import str
 from mongorm import *
 from bson.dbref import DBRef
 

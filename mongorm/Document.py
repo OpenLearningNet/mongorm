@@ -1,3 +1,4 @@
+from builtins import str
 import pymongo
 import warnings 
 
@@ -45,9 +46,9 @@ class Document(BaseDocument):
 				newId = collection.save( self._data, **kwargs )
 		except pymongo.errors.OperationFailure as err:
 			message = 'Could not save document (%s)'
-			if u'duplicate key' in unicode(err):
+			if u'duplicate key' in str(err):
 				message = u'Tried to save duplicate unique keys (%s)'
-			raise OperationError( message % unicode(err) )
+			raise OperationError( message % str(err) )
 		if newId is not None:
 			setattr(self, self._primaryKeyField, newId)
 		

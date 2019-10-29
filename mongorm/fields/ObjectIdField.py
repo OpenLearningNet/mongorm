@@ -8,9 +8,9 @@ from mongorm.fields.BaseField import BaseField
 class ObjectIdField(BaseField):
 	def fromPython( self, pythonValue, dereferences=[], modifier=None ):
 		if pythonValue is not None:
-			return objectid.ObjectId( unicode(pythonValue) )
+			return objectid.ObjectId( str(pythonValue) )
 		else:
 			return None
-	
+
 	def toPython( self, bsonValue ):
 		return bsonValue
