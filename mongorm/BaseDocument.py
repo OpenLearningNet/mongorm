@@ -3,9 +3,9 @@ from mongorm import connection
 from mongorm.DocumentMetaclass import DocumentMetaclass
 
 from mongorm.blackMagic import serialiseTypesForDocumentType
+from future.utils import with_metaclass
 
-class BaseDocument(object):
-	__metaclass__ = DocumentMetaclass
+class BaseDocument(with_metaclass(DocumentMetaclass, object)):
 	__internal__ = True
 	
 	class DoesNotExist(Exception):
@@ -18,13 +18,13 @@ class BaseDocument(object):
 		
 		self._data['_types'] = serialiseTypesForDocumentType( self.__class__ )
 		
-		for name,value in kwargs.iteritems( ):
+		for name,value in kwargs.items( ):
 			setattr(self, name, value)
 	
 	def _fromMongo( self, data, overwrite=True ):
 		self._is_lazy = True
 		
-		for (name,field) in self._fields.iteritems( ):
+		for (name,field) in self._fields.items( ):
 			dbField = field.dbField
 			if dbField in data and ( overwrite or not name in self._values ):
 				pythonValue = field.toPython( data[dbField] )
@@ -97,7 +97,7 @@ class BaseDocument(object):
 	
 	def _resyncFromPython( self ):
 		# before we go any further, re-sync from python values where needed
-		for (name,field) in self._fields.iteritems( ):
+		for (name,field) in self._fields.items( ):
 			requiresDefaultCall = (name not in self._values and callable(field.default))
 			if field._resyncAtSave or requiresDefaultCall:
 				dbField = field.dbField
