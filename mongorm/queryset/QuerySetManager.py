@@ -1,3 +1,4 @@
+from builtins import object
 from mongorm.connection import getDatabase
 from mongorm.queryset.QuerySet import QuerySet
 

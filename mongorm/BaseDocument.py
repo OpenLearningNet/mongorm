@@ -1,3 +1,4 @@
+from builtins import object
 from mongorm import connection
 from mongorm.DocumentMetaclass import DocumentMetaclass
 
