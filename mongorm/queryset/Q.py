@@ -1,3 +1,4 @@
+from past.builtins import basestring
 from builtins import object
 class Q(object):
 	def __init__( self, _query=None, **search ):

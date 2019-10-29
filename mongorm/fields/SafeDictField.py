@@ -1,3 +1,4 @@
+from past.builtins import basestring
 from mongorm.fields.DictField import DictField
 
 from collections import deque

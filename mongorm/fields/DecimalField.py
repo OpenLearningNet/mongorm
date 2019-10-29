@@ -1,3 +1,4 @@
+from past.builtins import basestring
 from mongorm.fields.BaseField import BaseField
 
 from decimal import Decimal

@@ -1,3 +1,4 @@
+from past.builtins import basestring
 from pymongo import MongoClient, MongoReplicaSetClient
 from pymongo.collection import Collection
 connection = None
