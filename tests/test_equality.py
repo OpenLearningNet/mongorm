@@ -77,9 +77,7 @@ def test_equality_with_unicode( ):
 	a = TestDocument( s=u"déjà vu" )
 	a.save( )
 
-	assert a.s == u"déjà vu"
-	assert a.s != "déjà vu"
-	assert a.s != "deja vu"
+	assert a.s == str(u"déjà vu")
 
 def test_equality_with_datetime( ):
 	"""Tests to make sure comparisons with datetime objects work."""
