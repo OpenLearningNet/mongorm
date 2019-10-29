@@ -289,8 +289,9 @@ def test_in_iter_operator( ):
 	assert Q( name__in={} ).toMongo( Test ) \
 		== {'name': {'$in': []}}
 
-	assert Q( name__in=set(['eggs', 'spam']) ).toMongo( Test ) \
-		== {'name': {'$in': ['eggs', 'spam']}}
+	# Python doesn't guarantee order. Should look like
+	# {'name': {'$in': ['eggs', 'span']}}
+	assert Q(name__in={'eggs', 'spam'}).toMongo(Test)['name']['$in'].sort() == ['eggs', 'spam'].sort()
 
 	# Clear objects so that counts will be correct
 	Test.objects.all( ).delete( )
@@ -417,8 +418,9 @@ def test_nin_operator( ):
 	assert Q( name__nin=[] ).toMongo( Test ) \
 		== {'name': {'$nin': []}}
 
-	assert Q( name__nin=['eggs', 'spam'] ).toMongo( Test ) \
-		== {'name': {'$nin': ['eggs', 'spam']}}
+	# Python doesn't guarantee order. Should look like
+	# {'name': {'$nin': ['eggs', 'spam']}}
+	assert Q( name__nin=['eggs', 'spam'] ).toMongo( Test )['name']['$nin'].sort() == ['eggs', 'spam'].sort()
 
 	# Clear objects so that counts will be correct
 	Test.objects.all( ).delete( )
@@ -441,8 +443,9 @@ def test_nin_iter_operator( ):
 	assert Q( name__nin={} ).toMongo( Test ) \
 		== {'name': {'$nin': []}}
 
-	assert Q( name__nin=set(['eggs', 'spam']) ).toMongo( Test ) \
-		== {'name': {'$nin': ['eggs', 'spam']}}
+	# Python doesn't guarantee order. Should look like
+	# {'name': {'$nin': ['eggs', 'spam']}}
+	assert Q(name__nin={'eggs', 'spam'}).toMongo(Test)['name']['$nin'].sort() == ['eggs', 'spam'].sort()
 
 	# Clear objects so that counts will be correct
 	Test.objects.all( ).delete( )
