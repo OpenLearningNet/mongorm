@@ -372,7 +372,7 @@ def test_multiple_iteration( ):
 	it1 = iter(query)
 	it2 = iter(query)
 
-	for i in xrange(Test.objects.count( )):
+	for i in range(Test.objects.count( )):
 		assert next(it1) == next(it2)
 
 def test_secondary_read_pref( ):
