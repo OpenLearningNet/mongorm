@@ -65,7 +65,7 @@ class DocumentMetaclass(type):
 				return fields[fieldName].optimalIndex( )
 			return fieldName
 
-		for field,value in fields.iteritems( ):
+		for field,value in fields.items( ):
 			if value.primaryKey:
 				assert primaryKey is None, "Can only have one primary key per document"
 				primaryKey = field

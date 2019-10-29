@@ -12,7 +12,7 @@ class Q(object):
 
 	def toMongo( self, document, forUpdate=False, modifier=None ):
 		newSearch = {}
-		for (name, value) in self.query.iteritems( ):
+		for (name, value) in self.query.items( ):
 			if name in ['$or', '$and']:
 				# mongodb logic operator - value is a list of Qs
 				newSearch[name] = [ value.toMongo( document ) for value in value ]
@@ -115,7 +115,7 @@ class Q(object):
 
 			if isinstance(searchValue, dict):
 				if not forUpdate:
-					for name,value in searchValue.iteritems( ):
+					for name,value in searchValue.items( ):
 						if name:
 							key = targetSearchKey + '.' + name
 						else:

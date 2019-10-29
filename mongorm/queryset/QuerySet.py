@@ -114,7 +114,7 @@ class QuerySet(object):
 	def _prepareActions( self, **actions ):
 		updates = {}
 
-		for action, value in actions.iteritems( ):
+		for action, value in actions.items( ):
 			assert '__' in action, 'Action "%s" not legal for update' % (action,)
 			modifier, fieldName = action.split( '__', 1 )
 			assert modifier in ['set', 'unset', 'setOnInsert', 'inc', 'dec', 'push', 'pull', 'pullAll'], 'Unknown modifier "%s"' % modifier
@@ -215,7 +215,7 @@ class QuerySet(object):
 	def fields( self, **projections ):
 		kwargs = self._get_kwargs( )
 		kwargs['fields'] = dict(self._fields or {})
-		for field, value in projections.iteritems( ):
+		for field, value in projections.items( ):
 			if '__' in field:
 				fieldName, sep, projection = field.rpartition( '__' )
 				if projection in PROJECTIONS:
@@ -246,7 +246,7 @@ class QuerySet(object):
 
 		search = self._get_query( )
 
-		if '_types' in search and 'projection' in kwargs and not kwargs['projection'].get( '_types' ) and all(kwargs['projection'].itervalues( )):
+		if '_types' in search and 'projection' in kwargs and not kwargs['projection'].get( '_types' ) and all(kwargs['projection'].values( )):
 			kwargs['projection']['_types'] = True
 
 		# read_preference not supported in pymongo 3.0+, use with_options() instead
@@ -342,7 +342,7 @@ class QuerySet(object):
 		return self
 
 	def _queryToIndex( self, query ):
-		for key, value in query.iteritems( ):
+		for key, value in query.items( ):
 			if key in ('$and', '$or'):
 				for subq in value:
 					for index in self._queryToIndex( subq ):
