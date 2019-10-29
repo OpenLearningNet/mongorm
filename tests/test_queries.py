@@ -1,5 +1,7 @@
 # -*- coding: utf8 -*-
 
+from builtins import next
+from builtins import range
 from mongorm import *
 from pymongo import ReadPreference
 from pytest import raises

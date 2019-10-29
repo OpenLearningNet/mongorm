@@ -1,3 +1,4 @@
+from builtins import range
 from mongorm import *
 
 try:
