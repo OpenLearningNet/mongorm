@@ -11,6 +11,6 @@ setup(name='mongorm',
       description='Mongorm',
       long_description='Mongorm',
       platforms=['any'],
-      install_requires=['pymongo >= 2.4.2', 'pysignals', 'iso8601'],
+      install_requires=['pymongo >= 2.4.2', 'pysignals', 'iso8601', 'future'],
       test_requires=['pytest'],
 )
