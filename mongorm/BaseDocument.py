@@ -7,30 +7,34 @@ from future.utils import with_metaclass
 
 class BaseDocument(with_metaclass(DocumentMetaclass, object)):
 	__internal__ = True
-	
+
 	class DoesNotExist(Exception):
 		pass
-	
+
 	def __init__( self, **kwargs ):
 		self._is_lazy = False
 		self._data = {}
 		self._values = {}
-		
+
 		self._data['_types'] = serialiseTypesForDocumentType( self.__class__ )
-		
+
 		for name,value in kwargs.items( ):
 			setattr(self, name, value)
-	
+
 	def _fromMongo( self, data, overwrite=True ):
 		self._is_lazy = True
-		
+
 		for (name,field) in self._fields.items( ):
 			dbField = field.dbField
 			if dbField in data and ( overwrite or not name in self._values ):
 				pythonValue = field.toPython( data[dbField] )
 				setattr(self, name, pythonValue)
-		
+
 		return self
+
+	# For python 2/3 compatibility
+	def __bool__( self ):
+		return True
 
 	# The following three methods are used for pickling/unpickling.
 	# If it weren't for the fact that  __getattr__ returns None
@@ -50,7 +54,7 @@ class BaseDocument(with_metaclass(DocumentMetaclass, object)):
 		assert name[0] == '_' or (name in self._fields), \
 			"Field '%s' does not exist in document '%s'" \
 			% (name, self.__class__.__name__)
-		
+
 		if name in self._fields:
 			field = self._fields[name]
 			mongoValue = field.fromPython( value )
@@ -62,7 +66,7 @@ class BaseDocument(with_metaclass(DocumentMetaclass, object)):
 		else:
 			assert name.startswith( '_' ), 'Only internal variables should ever be set as an attribute'
 			super(BaseDocument, self).__setattr__( name, value )
-	
+
 	def __getattr__( self, name ):
 		if name not in self._values and self._is_lazy and \
 			'_id' in self._data and self._data['_id'] is not None:
@@ -79,9 +83,9 @@ class BaseDocument(with_metaclass(DocumentMetaclass, object)):
 				if result is None:
 					raise self.DoesNotExist
 				self._fromMongo( result, overwrite=False )
-				
+
 				self._is_lazy = False
-		
+
 		field = self._fields.get( name, None )
 
 		if not name in self._values:
@@ -90,11 +94,11 @@ class BaseDocument(with_metaclass(DocumentMetaclass, object)):
 				default = field.getDefault( )
 
 			self._values[name] = default
-		
+
 		value = self._values.get( name )
-		
+
 		return value
-	
+
 	def _resyncFromPython( self ):
 		# before we go any further, re-sync from python values where needed
 		for (name,field) in self._fields.items( ):
@@ -104,4 +108,4 @@ class BaseDocument(with_metaclass(DocumentMetaclass, object)):
 				pythonValue = getattr(self, name)
 				self._data[dbField] = field.fromPython( pythonValue )
 				#print 'resyncing', dbField, 'to', self._data[dbField]
-		
+
