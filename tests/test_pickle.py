@@ -3,7 +3,7 @@ standard_library.install_aliases()
 from mongorm import Document, DocumentRegistry, StringField, connect
 
 try:
-	import pickle as pickle
+	import cPickle as pickle
 except ImportError:
 	import pickle
 
