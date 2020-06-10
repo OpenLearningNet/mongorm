@@ -37,5 +37,8 @@ class DateTimeField(BaseField):
 	
 	def toPython( self, bsonValue ):
 		if PYTZ and bsonValue is not None:
-			bsonValue = utc.localize( bsonValue )
+			if bsonValue.tzinfo is None:
+				bsonValue = utc.localize( bsonValue )
+			elif bsonValue.tzinfo != utc:
+				bsonValue = bsonValue.astimezone(utc)
 		return bsonValue
