@@ -1,10 +1,9 @@
 class BaseField(object):
 	_resyncAtSave = False
 	
-	def __init__( self, default=None, unique=False, dbField=None, primaryKey=False, dropDups=False ):
+	def __init__( self, default=None, unique=False, dbField=None, primaryKey=False ):
 		self.default = default
 		self.unique = unique
-		self.dropDups = dropDups
 		self.dbField = dbField
 		self.primaryKey = primaryKey
 		if primaryKey:

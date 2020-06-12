@@ -1,4 +1,4 @@
-from pymongo import MongoClient, MongoReplicaSetClient
+from pymongo import MongoClient, MongoReplicaSetClient, IndexModel
 from pymongo.collection import Collection
 connection = None
 database = None
@@ -8,9 +8,7 @@ connectionSettings = None
 pymongoWrapper = None
 
 stagedIndexes = []
-registeredIndexes = []
 droppedIndexes = []
-collectionIndexInfo = {}
 
 def connect( databaseName, autoEnsure=False, wrapPymongo=None, **kwargs ):
 	global database, connection, connectionSettings, autoEnsureIndexes, pymongoWrapper
@@ -52,8 +50,14 @@ def getConnection( ):
 
 	return connection
 
+def index_name_from_index_fields(index_fields):
+	return '_'.join([
+		field + '_1' if direction is 1 else '_-1'
+		for (field, direction) in index_fields
+	])
+
 def ensureIndexes( ):
-	global stagedIndexes, registeredIndexes, droppedIndexes, collectionIndexInfo
+	global stagedIndexes, droppedIndexes
 
 	if not autoEnsureIndexes:
 		return
@@ -61,40 +65,43 @@ def ensureIndexes( ):
 	assert database is not None, "Must be connected to database before ensuring indexes"
 
 	# Ensure indexes on the documents
-
+	indexes_by_collection = {}
 	for collection, key_or_list, kwargs in stagedIndexes:
+		if collection not in indexes_by_collection:
+			indexes_by_collection[collection] = []
+
+		indexes_by_collection[collection].append((key_or_list, kwargs))
+
+	for collection in indexes_by_collection:
+		# Create the collection if necessary
 		if collection not in database.collection_names():
 			Collection(database, collection, create=True)
 
-		indexInfo = collectionIndexInfo.setdefault(collection, database[collection].index_information())
+		indexInfo = database[collection].index_information()
+		dropped_indexes = []
 
-		if isinstance(key_or_list, basestring):
-			# if args on the index have changed, drop the index
-			key = key_or_list + '_1'
-			keyIndexInfo = indexInfo.get(key)
-			if keyIndexInfo is None:
-				key = key_or_list + '_-1'
-				keyIndexInfo = indexInfo.get(key)
+		for index_fields, kwargs in indexes_by_collection[collection]:
+			expected_index_name = index_name_from_index_fields(index_fields)
 
-			if keyIndexInfo is not None:
+			existing_index = indexInfo.get(expected_index_name)
+			if existing_index is not None:
 				hasChanged = False
-				if kwargs.get('unique', False) or keyIndexInfo.get('unique', False):
-					if kwargs.get('unique', False) != keyIndexInfo.get('unique', False):
-						hasChanged = True
-					if kwargs.get('dropDups', False) != keyIndexInfo.get('dropDups', False):
+				if kwargs.get('unique', False) or existing_index.get('unique', False):
+					if kwargs.get('unique', False) != existing_index.get('unique', False):
 						hasChanged = True
 
-				# TODO: FIX ME
-				#if hasChanged:
-				#	database[collection].drop_index(key)
-				#	droppedIndexes.append(key)
+				if hasChanged:
+					database[collection].drop_index(expected_index_name)
+					dropped_indexes.append(expected_index_name)
 
-		# Build the index in the background
-		kwargs['background'] = True
+		database[collection].create_indexes([
+			IndexModel(index_fields, **kwargs)
+			for index_fields, kwargs in indexes_by_collection[collection]
+			if (
+				index_name_from_index_fields(index_fields) not in indexes_by_collection[collection] or
+				index_name_from_index_fields(index_fields) in dropped_indexes)
+		])
 
-		database[collection].ensure_index(key_or_list, **kwargs)
-
-	registeredIndexes += stagedIndexes
 	stagedIndexes = []
 
 def getDatabase( ):
