@@ -29,6 +29,9 @@ def connect( databaseName, autoEnsure=False, wrapPymongo=None, **kwargs ):
 	connection = None
 	database = None
 
+	# Initialise connection and ensure indexes if configured
+	getDatabase()
+
 def getConnection( ):
 	global database, connection, connectionSettings
 
