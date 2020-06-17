@@ -71,11 +71,7 @@ class DocumentMetaclass(type):
 				primaryKey = field
 			if value.unique:
 				keyOpts = { 'unique': True }
-				
-				if value.dropDups:
-					keyOpts['dropDups'] = True
-				
-				connection.stagedIndexes.append( (collection, indexConverter( field ), keyOpts) )
+				connection.stagedIndexes.append( (collection, [(indexConverter( field ), 1)], keyOpts) )
 		
 		# add a primary key if none exists and one is required
 		if needsPrimaryKey and primaryKey is None:
